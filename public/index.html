@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockPulse — Live Charts</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📈</text></svg>">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-toolbar: #fafbfc;
+            --bg-hover: #f0f2f5;
+            --bg-active: #e8eaed;
+            --border: #e1e4e8;
+            --border-light: #f0f3fa;
+            --text-primary: #1a1e2c;
+            --text-secondary: #6b7280;
+            --text-muted: #9ca3af;
+            --accent: #2962ff;
+            --accent-hover: #1e50d9;
+            --green: #089981;
+            --green-bg: rgba(8,153,129,0.08);
+            --red: #f23645;
+            --red-bg: rgba(242,54,69,0.08);
+            --purple: #7e57c2;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+            --radius: 8px;
+            --radius-sm: 6px;
+            --transition: 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* ===== TOOLBAR ===== */
+        .toolbar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 16px;
+            background: var(--bg-toolbar);
+            border-bottom: 1px solid var(--border);
+            height: 52px;
+            position: relative;
+            z-index: 20;
+        }
+
+        /* Logo / Brand */
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-right: 8px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+        .brand-icon {
+            width: 28px;
+            height: 28px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            box-shadow: var(--shadow-sm);
+        }
+        .brand-text {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Search / Ticker input */
+        .ticker-search {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .search-icon {
+            position: absolute;
+            left: 10px;
+            width: 16px;
+            height: 16px;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: color var(--transition);
+        }
+        .ticker-search:focus-within .search-icon { color: var(--accent); }
+        .ticker-input {
+            background: var(--bg-primary);
+            border: 1.5px solid var(--border);
+            color: var(--text-primary);
+            padding: 7px 12px 7px 32px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            width: 140px;
+            text-transform: uppercase;
+            outline: none;
+            transition: all var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        .ticker-input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(41,98,255,0.12);
+            width: 180px;
+        }
+        .ticker-input::placeholder {
+            color: var(--text-muted);
+            font-weight: 400;
+            text-transform: none;
+        }
+
+        /* Ticker header info — TradingView style */
+        .ticker-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-left: 4px;
+            min-width: 0;
+        }
+        .ticker-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -0.2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 260px;
+        }
+        .ticker-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            white-space: nowrap;
+            font-weight: 500;
+        }
+        .ticker-meta .sep { margin: 0 1px; }
+        .ticker-arrows {
+            display: flex;
+            gap: 2px;
+        }
+        .ticker-arrow {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ticker-arrow.up { background: var(--green); }
+        .ticker-arrow.down { background: var(--red); }
+        .ticker-arrow svg { width: 10px; height: 10px; color: #fff; }
+        .ticker-price-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .ticker-last-price {
+            color: var(--text-primary);
+        }
+        .ticker-change {
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .ticker-change.up { color: var(--green); background: var(--green-bg); }
+        .ticker-change.down { color: var(--red); background: var(--red-bg); }
+
+        .toolbar-separator {
+            width: 1px;
+            height: 28px;
+            background: var(--border);
+            margin: 0 4px;
+        }
+
+        /* Period buttons */
+        .period-group {
+            display: flex;
+            gap: 2px;
+            background: var(--bg-hover);
+            padding: 3px;
+            border-radius: var(--radius);
+        }
+        .period-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 12px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            transition: all var(--transition);
+            letter-spacing: 0.2px;
+        }
+        .period-btn:hover {
+            color: var(--text-primary);
+            background: var(--bg-primary);
+            box-shadow: var(--shadow-sm);
+        }
+        .period-btn.active {
+            color: #fff;
+            background: var(--accent);
+            box-shadow: 0 2px 4px rgba(41,98,255,0.3);
+        }
+
+        /* Indicator toggles */
+        .toolbar-right {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        /* ===== INDICATOR LEGEND (TradingView-style) ===== */
+        .ind-legend {
+            position: absolute;
+            top: 8px;
+            left: 16px;
+            z-index: 10;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .ind-legend-row {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(255,255,255,0.88);
+            backdrop-filter: blur(8px);
+            padding: 2px 6px;
+            border-radius: 4px;
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+        .ind-legend-row.hidden .ind-name,
+        .ind-legend-row.hidden .ind-val { opacity: 0.35; }
+        .ind-name {
+            font-weight: 600;
+            cursor: default;
+        }
+        .ind-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding: 0;
+            border-radius: 3px;
+            color: var(--text-muted);
+            opacity: 0;
+            transition: opacity 0.15s, background 0.15s, color 0.15s;
+        }
+        .ind-legend-row:hover .ind-btn { opacity: 1; }
+        .ind-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .ind-btn.eye-btn.off {
+            opacity: 1;
+            color: var(--text-muted);
+        }
+        .ind-btn svg { width: 12px; height: 12px; }
+        .ind-val {
+            font-weight: 500;
+            margin-left: 2px;
+        }
+
+        /* ===== SETTINGS MODAL ===== */
+        .settings-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 200;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .settings-overlay.visible { display: flex; }
+        .settings-dialog {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            padding: 20px 24px;
+            min-width: 260px;
+            font-family: 'Inter', sans-serif;
+        }
+        .settings-dialog h3 {
+            margin: 0 0 16px;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        .settings-field {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .settings-field label {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .settings-field input {
+            width: 70px;
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+            text-align: right;
+            outline: none;
+        }
+        .settings-field input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(41,98,255,0.15);
+        }
+        .settings-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .settings-actions button {
+            padding: 6px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: #fff;
+            color: var(--text-secondary);
+            transition: all 0.15s;
+        }
+        .settings-actions button:hover {
+            background: var(--bg-hover);
+        }
+        .settings-actions .btn-apply {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+        }
+        .settings-actions .btn-apply:hover {
+            background: var(--accent-hover);
+        }
+
+        /* ===== OHLC LEGEND ===== */
+        .ohlc-legend {
+            position: absolute;
+            top: 8px;
+            left: 16px;
+            font-size: 12px;
+            z-index: 10;
+            pointer-events: none;
+            font-family: 'JetBrains Mono', monospace;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(8px);
+            padding: 6px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-light);
+        }
+        .ohlc-legend:empty {
+            display: none;
+        }
+        .ohlc-legend span { margin-right: 4px; }
+        .ohlc-legend .lbl {
+            color: var(--text-muted);
+            font-weight: 500;
+            font-size: 11px;
+        }
+        .ohlc-legend .val-up { color: var(--green); font-weight: 600; }
+        .ohlc-legend .val-down { color: var(--red); font-weight: 600; }
+        .ohlc-legend .change-badge {
+            margin-left: 4px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .ohlc-legend .change-badge.up { background: var(--green-bg); color: var(--green); }
+        .ohlc-legend .change-badge.down { background: var(--red-bg); color: var(--red); }
+
+        /* ===== CHART CONTAINERS ===== */
+        .chart-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 52px);
+            position: relative;
+        }
+
+        #main-chart {
+            flex: 1;
+            min-height: 0;
+        }
+
+        #volume-chart {
+            height: 100px;
+            border-top: 1px solid var(--border);
+            position: relative;
+        }
+
+        #rsi-chart {
+            height: 130px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Volume legend value (inline in ind-legend) */
+        #volLegend:empty { display: none; }
+
+        /* ===== LOADING ===== */
+        .loading-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            z-index: 100;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+        .loading-overlay.visible {
+            opacity: 1;
+            pointer-events: all;
+        }
+        .loader {
+            width: 40px;
+            height: 40px;
+            position: relative;
+        }
+        .loader::before, .loader::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+        .loader::before {
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        .loader::after {
+            border-bottom-color: #6366f1;
+            animation: spin 0.8s linear infinite reverse;
+            inset: 4px;
+        }
+        .loading-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ===== TOAST ===== */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #1a1e2c;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-size: 13px;
+            font-weight: 500;
+            z-index: 200;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .toast::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--red);
+            flex-shrink: 0;
+        }
+        .toast.visible { transform: translateX(-50%) translateY(0); }
+
+        /* ===== LIVE INDICATOR ===== */
+        .live-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 11px;
+            font-weight: 600;
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: 0.3px;
+            color: var(--text-muted);
+            transition: all var(--transition);
+        }
+        .live-indicator.active {
+            color: var(--green);
+        }
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--text-muted);
+            transition: background var(--transition);
+        }
+        .live-indicator.active .live-dot {
+            background: var(--green);
+            animation: pulse-live 2s ease-in-out infinite;
+        }
+        @keyframes pulse-live {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(8,153,129,0.5); }
+            50% { box-shadow: 0 0 0 5px rgba(8,153,129,0); }
+        }
+
+        /* ===== WATERMARK ===== */
+        .watermark {
+            position: absolute;
+            top: 40px;
+            right: 16px;
+            font-size: 11px;
+            color: var(--text-muted);
+            opacity: 0.4;
+            pointer-events: none;
+            font-weight: 500;
+            z-index: 5;
+        }
+    </style>
+</head>
+<body>
+    <div class="toolbar">
+        <a class="brand" href="/">
+            <div class="brand-icon">SP</div>
+            <span class="brand-text">StockPulse</span>
+        </a>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="ticker-search">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+            </svg>
+            <input class="ticker-input" id="tickerInput" value="AAPL" spellcheck="false"
+                   maxlength="10" placeholder="Search ticker...">
+        </div>
+
+        <div class="ticker-header" id="tickerHeader">
+            <span class="ticker-name" id="tickerName"></span>
+            <span class="ticker-meta" id="tickerMeta"></span>
+            <div class="ticker-arrows" id="tickerArrows"></div>
+            <div class="ticker-price-group">
+                <span class="ticker-last-price" id="tickerLastPrice"></span>
+                <span class="ticker-change" id="tickerChange"></span>
+            </div>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="period-group">
+            <button class="period-btn" data-period="1mo">1M</button>
+            <button class="period-btn" data-period="3mo">3M</button>
+            <button class="period-btn" data-period="6mo">6M</button>
+            <button class="period-btn active" data-period="1y">1Y</button>
+            <button class="period-btn" data-period="2y">2Y</button>
+            <button class="period-btn" data-period="5y">5Y</button>
+        </div>
+
+        <div class="toolbar-right">
+            <div class="live-indicator" id="liveIndicator" title="Live price updates every 10s during market hours">
+                <span class="live-dot"></span> <span id="liveLabel">LIVE</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-wrapper">
+        <div id="main-chart"></div>
+        <div class="ohlc-legend" id="ohlcLegend"></div>
+        <!-- Indicator legends on main chart -->
+        <div class="ind-legend" id="mainIndLegend" style="top:32px">
+            <div class="ind-legend-row" id="maLegendRow" data-ind="ma">
+                <span class="ind-name" id="maLegendName" style="color:var(--accent)">MA (200, close)</span>
+                <button class="ind-btn eye-btn" data-ind="ma" title="Toggle visibility">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="ind-btn gear-btn" data-ind="ma" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </button>
+                <span class="ind-val" id="maLegendVal" style="color:var(--accent)"></span>
+            </div>
+            <div class="ind-legend-row" id="stLegendRow" data-ind="supertrend">
+                <span class="ind-name" id="stLegendName" style="color:var(--green)">SuperTrend (10, 3)</span>
+                <button class="ind-btn eye-btn" data-ind="supertrend" title="Toggle visibility">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="ind-btn gear-btn" data-ind="supertrend" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </button>
+                <span class="ind-val" id="stLegendVal" style="color:var(--green)"></span>
+            </div>
+        </div>
+        <span class="watermark">StockPulse</span>
+
+        <div id="volume-chart-container" style="position:relative">
+            <div class="ind-legend">
+                <div class="ind-legend-row">
+                    <span class="ind-name" style="color:var(--text-secondary)">Vol</span>
+                    <span class="ind-val" id="volLegend" style="color:var(--text-secondary)"></span>
+                </div>
+            </div>
+            <div id="volume-chart"></div>
+        </div>
+
+        <div id="rsi-chart-container" style="position:relative">
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="rsiLegendRow" data-ind="rsi">
+                    <span class="ind-name" id="rsiLegendName" style="color:var(--purple)">RSI (14)</span>
+                    <button class="ind-btn eye-btn" data-ind="rsi" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button class="ind-btn gear-btn" data-ind="rsi" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    </button>
+                    <span class="ind-val" id="rsiLegendVal" style="color:var(--purple)"></span>
+                </div>
+            </div>
+            <div id="rsi-chart"></div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="settings-overlay" id="settingsOverlay">
+        <div class="settings-dialog" id="settingsDialog">
+            <h3 id="settingsTitle">Settings</h3>
+            <div id="settingsBody"></div>
+            <div class="settings-actions">
+                <button id="settingsCancel">Cancel</button>
+                <button class="btn-apply" id="settingsApply">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading">
+        <div class="loader"></div>
+        <span class="loading-text">Loading chart data...</span>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // ----- State -----
+        const state = {
+            ticker: 'AAPL',
+            period: '1y',
+            indicators: { ma: true, supertrend: true, rsi: true },
+            params: {
+                ma: { period: 200 },
+                supertrend: { period: 10, multiplier: 3.0 },
+                rsi: { period: 14 },
+            },
+        };
+
+        // ----- Chart options -----
+        const chartOpts = {
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#6b7280',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: '#f5f5f7' },
+                horzLines: { color: '#f5f5f7' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+                horzLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+            },
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70 },
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false },
+        };
+
+        // Smaller pane options — hide time axis labels (shared from main)
+        const paneOpts = {
+            ...chartOpts,
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
+        };
+
+        // ----- Create charts -----
+        const mainEl = document.getElementById('main-chart');
+        const volEl = document.getElementById('volume-chart');
+        const rsiEl = document.getElementById('rsi-chart');
+
+        const mainChart = LightweightCharts.createChart(mainEl, { ...chartOpts, autoSize: true });
+
+        const volumeChart = LightweightCharts.createChart(volEl, {
+            ...paneOpts,
+            autoSize: true,
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70 },
+        });
+
+        const rsiChart = LightweightCharts.createChart(rsiEl, {
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#6b7280',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: '#f5f5f7' },
+                horzLines: { visible: false },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+                horzLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+            },
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70 },
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
+            autoSize: true,
+        });
+
+        // ----- Sync time scales across all 3 charts -----
+        let isSyncing = false;
+        function syncRange(source, targets) {
+            source.timeScale().subscribeVisibleLogicalRangeChange(range => {
+                if (isSyncing || !range) return;
+                isSyncing = true;
+                targets.forEach(c => c.timeScale().setVisibleLogicalRange(range));
+                isSyncing = false;
+            });
+        }
+        syncRange(mainChart, [volumeChart, rsiChart]);
+        syncRange(volumeChart, [mainChart, rsiChart]);
+        syncRange(rsiChart, [mainChart, volumeChart]);
+
+        // ----- Series on main chart (candles + indicators only) -----
+        const candleSeries = mainChart.addCandlestickSeries({
+            upColor: '#089981', downColor: '#f23645',
+            borderUpColor: '#089981', borderDownColor: '#f23645',
+            wickUpColor: '#089981', wickDownColor: '#f23645',
+        });
+
+        const maSeries = mainChart.addLineSeries({
+            color: '#2962ff', lineWidth: 1.5,
+            priceLineVisible: true, priceLineColor: '#2962ff', priceLineStyle: LightweightCharts.LineStyle.Dashed,
+            lastValueVisible: true,
+            crosshairMarkerVisible: false,
+        });
+
+        const supertrendSeries = mainChart.addLineSeries({
+            lineWidth: 2,
+            priceLineVisible: true, priceLineStyle: LightweightCharts.LineStyle.Dashed,
+            lastValueVisible: true,
+            crosshairMarkerVisible: false,
+        });
+
+        // ----- Series on volume chart -----
+        const volumeSeries = volumeChart.addHistogramSeries({
+            priceFormat: { type: 'volume' },
+        });
+
+        const volMaSeries = volumeChart.addLineSeries({
+            color: 'rgba(76,120,240,0.6)', lineWidth: 1.5,
+            priceFormat: { type: 'volume' },
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+        });
+
+        // ----- Series on RSI chart -----
+        const rsiSeries = rsiChart.addLineSeries({
+            color: '#7e57c2', lineWidth: 1.5,
+            priceLineVisible: false,
+            lastValueVisible: true,
+        });
+
+        // Hidden anchor series to align RSI time scale with main chart
+        const rsiAnchorSeries = rsiChart.addLineSeries({
+            color: 'transparent',
+            lineWidth: 0,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            priceScaleId: 'anchor',
+            visible: false,
+        });
+
+        // RSI overbought/oversold reference lines at 70 and 30
+        rsiSeries.createPriceLine({ price: 70, color: '#7e57c2', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: false });
+        rsiSeries.createPriceLine({ price: 30, color: '#7e57c2', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: false });
+
+        // Store candle data for crosshair legend
+        let currentCandles = [];
+        let currentVolume = [];
+        let volumeByTime = {};
+
+        // ----- Infinite scroll state -----
+        const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
+        let loadedDaysBack = 365;
+        let isFetchingMore = false;
+        const MAX_DAYS_BACK = 10000;
+
+        // ----- OHLC Legend on hover -----
+        const ohlcLegend = document.getElementById('ohlcLegend');
+
+        function updateOhlcLegend(candle) {
+            if (!candle) {
+                ohlcLegend.innerHTML = '';
+                return;
+            }
+            const isUp = candle.close >= candle.open;
+            const cls = isUp ? 'val-up' : 'val-down';
+            const change = candle.close - candle.open;
+            const pct = ((change / candle.open) * 100).toFixed(2);
+            const sign = change >= 0 ? '+' : '';
+            const badgeCls = isUp ? 'up' : 'down';
+
+            ohlcLegend.innerHTML =
+                `<span class="lbl">O</span><span class="${cls}">${candle.open.toFixed(2)}</span>` +
+                `<span class="lbl">H</span><span class="${cls}">${candle.high.toFixed(2)}</span>` +
+                `<span class="lbl">L</span><span class="${cls}">${candle.low.toFixed(2)}</span>` +
+                `<span class="lbl">C</span><span class="${cls}">${candle.close.toFixed(2)}</span>` +
+                `<span class="change-badge ${badgeCls}">${sign}${change.toFixed(2)} (${sign}${pct}%)</span>`;
+        }
+
+        // ----- Volume Legend on hover -----
+        const volLegend = document.getElementById('volLegend');
+
+        function formatVolume(v) {
+            if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
+            if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
+            if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
+            return v.toString();
+        }
+
+        function updateVolLegend(vol) {
+            if (vol == null) {
+                volLegend.innerHTML = '';
+                return;
+            }
+            volLegend.textContent = formatVolume(vol);
+        }
+
+        // ----- Indicator legend value updates -----
+        const maLegendVal = document.getElementById('maLegendVal');
+        const stLegendVal = document.getElementById('stLegendVal');
+        const rsiLegendVal = document.getElementById('rsiLegendVal');
+
+        function updateIndLegendValues(param) {
+            if (param && param.seriesData) {
+                const maData = param.seriesData.get(maSeries);
+                maLegendVal.textContent = maData ? maData.value.toFixed(2) : '';
+
+                const stData = param.seriesData.get(supertrendSeries);
+                stLegendVal.textContent = stData ? stData.value.toFixed(2) : '';
+            }
+        }
+
+        function updateRsiLegendValue(param) {
+            if (param && param.seriesData) {
+                const rsiData = param.seriesData.get(rsiSeries);
+                rsiLegendVal.textContent = rsiData ? rsiData.value.toFixed(2) : '';
+            }
+        }
+
+        function showLastIndValues() {
+            // Show last known values when crosshair leaves
+            maLegendVal.textContent = '';
+            stLegendVal.textContent = '';
+            rsiLegendVal.textContent = '';
+        }
+
+        // ----- Crosshair sync across panes -----
+        let isSyncingCrosshair = false;
+
+        function syncCrosshairFromSource(sourceChart, param, targets) {
+            if (isSyncingCrosshair) return;
+            isSyncingCrosshair = true;
+            if (!param.time) {
+                targets.forEach(({ chart }) => chart.clearCrosshairPosition());
+            } else {
+                targets.forEach(({ chart, series }) => {
+                    chart.setCrosshairPosition(undefined, param.time, series);
+                });
+            }
+            isSyncingCrosshair = false;
+        }
+
+        // Volume crosshair hover
+        volumeChart.subscribeCrosshairMove(param => {
+            syncCrosshairFromSource(volumeChart, param, [
+                { chart: mainChart, series: candleSeries },
+                { chart: rsiChart, series: rsiSeries },
+            ]);
+            if (!param.time || !param.seriesData || !param.seriesData.has(volumeSeries)) {
+                if (currentVolume.length > 0) {
+                    updateVolLegend(currentVolume[currentVolume.length - 1].value);
+                }
+                return;
+            }
+            const bar = param.seriesData.get(volumeSeries);
+            if (bar) updateVolLegend(bar.value);
+        });
+
+        // RSI crosshair hover
+        rsiChart.subscribeCrosshairMove(param => {
+            syncCrosshairFromSource(rsiChart, param, [
+                { chart: mainChart, series: candleSeries },
+                { chart: volumeChart, series: volumeSeries },
+            ]);
+            updateRsiLegendValue(param);
+            if (param.time) {
+                const vol = volumeByTime[param.time];
+                if (vol != null) updateVolLegend(vol);
+            } else {
+                if (currentVolume.length > 0) {
+                    updateVolLegend(currentVolume[currentVolume.length - 1].value);
+                }
+            }
+        });
+
+        // Main chart crosshair hover for OHLC + volume + indicator values
+        mainChart.subscribeCrosshairMove(param => {
+            syncCrosshairFromSource(mainChart, param, [
+                { chart: volumeChart, series: volumeSeries },
+                { chart: rsiChart, series: rsiSeries },
+            ]);
+            if (!param.time || !param.seriesData || !param.seriesData.has(candleSeries)) {
+                if (currentCandles.length > 0) {
+                    updateOhlcLegend(currentCandles[currentCandles.length - 1]);
+                }
+                if (currentVolume.length > 0) {
+                    updateVolLegend(currentVolume[currentVolume.length - 1].value);
+                }
+                showLastIndValues();
+                return;
+            }
+            const candle = param.seriesData.get(candleSeries);
+            if (candle) updateOhlcLegend(candle);
+            const vol = volumeByTime[param.time];
+            if (vol != null) updateVolLegend(vol);
+            updateIndLegendValues(param);
+        });
+
+        // ----- Ticker header update -----
+        function updateTickerHeader({ ticker, name, exchange, close, open }) {
+            const nameEl = document.getElementById('tickerName');
+            nameEl.textContent = name || ticker;
+            nameEl.title = name || ticker;
+
+            const metaEl = document.getElementById('tickerMeta');
+            const parts = [];
+            parts.push('1D');
+            if (exchange) parts.push(exchange);
+            metaEl.innerHTML = parts.map(p => `<span>${p}</span>`).join('<span class="sep"> · </span>');
+
+            const arrowsEl = document.getElementById('tickerArrows');
+            if (close != null && open != null) {
+                const isUp = close >= open;
+                arrowsEl.innerHTML =
+                    `<span class="ticker-arrow ${isUp ? 'up' : 'down'}">` +
+                    `<svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">` +
+                    (isUp ? `<path d="M6 9V3M3 5l3-3 3 3"/>` : `<path d="M6 3v6M3 7l3 3 3-3"/>`) +
+                    `</svg></span>`;
+            }
+
+            if (close != null) {
+                document.getElementById('tickerLastPrice').textContent = close.toFixed(2);
+
+                if (open != null) {
+                    const change = close - open;
+                    const pct = ((change / open) * 100).toFixed(2);
+                    const sign = change >= 0 ? '+' : '';
+                    const dir = change >= 0 ? 'up' : 'down';
+                    const changeEl = document.getElementById('tickerChange');
+                    changeEl.textContent = `${sign}${change.toFixed(2)} (${sign}${pct}%)`;
+                    changeEl.className = `ticker-change ${dir}`;
+                }
+
+                document.title = `${ticker} ${close.toFixed(2)} — StockPulse`;
+            }
+        }
+
+        // ----- Data loading -----
+        function applyChartData(data, fitContent) {
+            currentCandles = data.candles;
+            currentVolume = data.volume;
+            volumeByTime = {};
+            data.volume.forEach(v => { volumeByTime[v.time] = v.value; });
+
+            candleSeries.setData(data.candles);
+            maSeries.setData(data.ma);
+            supertrendSeries.setData(data.supertrend);
+
+            volumeSeries.setData(data.volume);
+            volMaSeries.setData(data.vol_ma14 || []);
+
+            rsiSeries.setData(data.rsi);
+            // Anchor RSI time scale to match candle time range
+            rsiAnchorSeries.setData(data.candles.map(c => ({ time: c.time, value: 50 })));
+
+            // Update header
+            const last = data.candles[data.candles.length - 1];
+            updateTickerHeader({
+                ticker: data.ticker,
+                name: data.name,
+                exchange: data.exchange,
+                close: last?.close,
+                open: last?.open,
+            });
+
+            // Update supertrend price line color to match last point
+            if (data.supertrend.length > 0) {
+                const lastSt = data.supertrend[data.supertrend.length - 1];
+                supertrendSeries.applyOptions({
+                    color: lastSt.color,
+                    priceLineColor: lastSt.color,
+                });
+            }
+
+            if (last) updateOhlcLegend(last);
+            if (currentVolume.length > 0) updateVolLegend(currentVolume[currentVolume.length - 1].value);
+
+            if (fitContent) {
+                mainChart.timeScale().fitContent();
+                volumeChart.timeScale().fitContent();
+                rsiChart.timeScale().fitContent();
+            }
+            applyVisibility();
+        }
+
+        async function loadChart() {
+            showLoading(true);
+            loadedDaysBack = PERIOD_DAYS[state.period] || 365;
+            try {
+                const p = state.params;
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&ma_period=${p.ma.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}`);
+                if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
+                const data = await res.json();
+                if (data.error) { showToast(data.error); return; }
+                applyChartData(data, true);
+            } catch (e) {
+                showToast('Failed to load data. Check the ticker symbol.');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // ----- Infinite scroll: load more history when panning left -----
+        async function loadMoreHistory() {
+            if (isFetchingMore || loadedDaysBack >= MAX_DAYS_BACK) return;
+            isFetchingMore = true;
+
+            const newDaysBack = Math.min(loadedDaysBack * 2, MAX_DAYS_BACK);
+            const now = Math.floor(Date.now() / 1000);
+            const start = now - newDaysBack * 86400;
+
+            try {
+                const p = state.params;
+                const res = await fetch(
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&ma_period=${p.ma.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}`
+                );
+                if (!res.ok) return;
+                const data = await res.json();
+                if (data.error || !data.candles.length) return;
+
+                if (data.candles.length <= currentCandles.length) {
+                    loadedDaysBack = MAX_DAYS_BACK;
+                    return;
+                }
+
+                const visibleRange = mainChart.timeScale().getVisibleRange();
+
+                loadedDaysBack = newDaysBack;
+                applyChartData(data, false);
+
+                if (visibleRange) {
+                    mainChart.timeScale().setVisibleRange(visibleRange);
+                }
+            } catch (e) {
+                // Silent fail
+            } finally {
+                isFetchingMore = false;
+            }
+        }
+
+        mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => {
+            if (!range || isFetchingMore) return;
+            if (range.from < 10) {
+                loadMoreHistory();
+            }
+        });
+
+        function applyVisibility() {
+            maSeries.applyOptions({ visible: state.indicators.ma });
+            supertrendSeries.applyOptions({ visible: state.indicators.supertrend });
+
+            const rsiVisible = state.indicators.rsi;
+            const rsiContainer = document.getElementById('rsi-chart-container');
+            rsiContainer.style.display = rsiVisible ? 'block' : 'none';
+
+            mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
+            volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
+            if (rsiVisible) rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
+        }
+
+        // ----- UI helpers -----
+        function showLoading(show) {
+            document.getElementById('loading').classList.toggle('visible', show);
+        }
+
+        function showToast(msg) {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('visible');
+            setTimeout(() => el.classList.remove('visible'), 4000);
+        }
+
+        // ----- Event handlers -----
+        document.getElementById('tickerInput').addEventListener('focus', (e) => {
+            e.target.select();
+        });
+
+        document.getElementById('tickerInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const val = e.target.value.trim();
+                if (val) {
+                    state.ticker = val;
+                    e.target.blur();
+                    loadChart().then(() => startPolling());
+                }
+            }
+        });
+
+        document.querySelectorAll('.period-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelector('.period-btn.active')?.classList.remove('active');
+                btn.classList.add('active');
+                state.period = btn.dataset.period;
+                loadChart();
+            });
+        });
+
+        // ----- Eye toggle buttons -----
+        const eyeOpenSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+        const eyeClosedSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19M1 1l22 22"/></svg>';
+
+        document.querySelectorAll('.eye-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const ind = btn.dataset.ind;
+                state.indicators[ind] = !state.indicators[ind];
+                const row = btn.closest('.ind-legend-row');
+                row.classList.toggle('hidden', !state.indicators[ind]);
+                btn.innerHTML = state.indicators[ind] ? eyeOpenSvg : eyeClosedSvg;
+                btn.classList.toggle('off', !state.indicators[ind]);
+                applyVisibility();
+            });
+        });
+
+        // ----- Settings modal -----
+        const settingsOverlay = document.getElementById('settingsOverlay');
+        const settingsBody = document.getElementById('settingsBody');
+        const settingsTitle = document.getElementById('settingsTitle');
+        let currentSettingsInd = null;
+
+        const settingsConfig = {
+            ma: {
+                title: 'MA Settings',
+                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 }],
+            },
+            supertrend: {
+                title: 'SuperTrend Settings',
+                fields: [
+                    { key: 'period', label: 'ATR Period', type: 'number', min: 1, max: 100 },
+                    { key: 'multiplier', label: 'Multiplier', type: 'number', min: 0.1, max: 20, step: 0.1 },
+                ],
+            },
+            rsi: {
+                title: 'RSI Settings',
+                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 100 }],
+            },
+        };
+
+        function openSettings(ind) {
+            currentSettingsInd = ind;
+            const cfg = settingsConfig[ind];
+            settingsTitle.textContent = cfg.title;
+            settingsBody.innerHTML = cfg.fields.map(f => {
+                const val = state.params[ind][f.key];
+                const step = f.step || 1;
+                return `<div class="settings-field">
+                    <label>${f.label}</label>
+                    <input type="number" data-key="${f.key}" value="${val}" min="${f.min}" max="${f.max}" step="${step}">
+                </div>`;
+            }).join('');
+            settingsOverlay.classList.add('visible');
+            settingsBody.querySelector('input')?.focus();
+        }
+
+        function closeSettings() {
+            settingsOverlay.classList.remove('visible');
+            currentSettingsInd = null;
+        }
+
+        function updateLegendNames() {
+            const p = state.params;
+            document.getElementById('maLegendName').textContent = `MA (${p.ma.period}, close)`;
+            document.getElementById('stLegendName').textContent = `SuperTrend (${p.supertrend.period}, ${p.supertrend.multiplier})`;
+            document.getElementById('rsiLegendName').textContent = `RSI (${p.rsi.period})`;
+        }
+
+        document.querySelectorAll('.gear-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                openSettings(btn.dataset.ind);
+            });
+        });
+
+        document.getElementById('settingsCancel').addEventListener('click', closeSettings);
+        settingsOverlay.addEventListener('click', (e) => {
+            if (e.target === settingsOverlay) closeSettings();
+        });
+
+        document.getElementById('settingsApply').addEventListener('click', () => {
+            if (!currentSettingsInd) return;
+            const inputs = settingsBody.querySelectorAll('input');
+            inputs.forEach(inp => {
+                const key = inp.dataset.key;
+                const val = parseFloat(inp.value);
+                if (!isNaN(val)) state.params[currentSettingsInd][key] = val;
+            });
+            updateLegendNames();
+            closeSettings();
+            loadChart();
+        });
+
+        // Apply on Enter key in settings input
+        document.getElementById('settingsDialog').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') document.getElementById('settingsApply').click();
+        });
+
+        // ----- Keyboard shortcuts -----
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '/' && document.activeElement !== document.getElementById('tickerInput')) {
+                e.preventDefault();
+                document.getElementById('tickerInput').focus();
+            }
+            if (e.key === 'Escape') {
+                if (settingsOverlay.classList.contains('visible')) {
+                    closeSettings();
+                } else {
+                    document.getElementById('tickerInput').blur();
+                }
+            }
+        });
+
+        // ----- Resize -----
+        window.addEventListener('resize', () => {
+            mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
+            volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
+            rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
+        });
+
+        // ----- Live quote polling (every 10s) -----
+        let quoteInterval = null;
+        let isMarketOpen = false;
+
+        function setLiveStatus(active) {
+            isMarketOpen = active;
+            const el = document.getElementById('liveIndicator');
+            const label = document.getElementById('liveLabel');
+            el.classList.toggle('active', active);
+            label.textContent = active ? 'LIVE' : 'CLOSED';
+        }
+
+        async function pollQuote() {
+            try {
+                const res = await fetch(`/api/quote?ticker=${state.ticker}`);
+                if (!res.ok) return;
+                const q = await res.json();
+                if (q.error) return;
+
+                setLiveStatus(q.trading);
+
+                // Only update candle/volume data when market is open
+                if (!q.trading) return;
+                if (currentCandles.length === 0 || !q.close) return;
+
+                const lastCandle = currentCandles[currentCandles.length - 1];
+                const today = new Date().toISOString().slice(0, 10);
+
+                if (lastCandle.time === today) {
+                    lastCandle.open = q.open ?? lastCandle.open;
+                    lastCandle.high = q.high ?? lastCandle.high;
+                    lastCandle.low = q.low ?? lastCandle.low;
+                    lastCandle.close = q.close;
+                    candleSeries.update(lastCandle);
+
+                    const prev = currentCandles.length > 1 ? currentCandles[currentCandles.length - 2] : lastCandle;
+                    volumeSeries.update({
+                        time: today,
+                        value: q.volume,
+                        color: q.close >= prev.close ? 'rgba(8,153,129,0.5)' : 'rgba(242,54,69,0.5)',
+                    });
+                } else if (q.open != null) {
+                    const newCandle = {
+                        time: today,
+                        open: q.open,
+                        high: q.high ?? q.open,
+                        low: q.low ?? q.open,
+                        close: q.close,
+                    };
+                    currentCandles.push(newCandle);
+                    candleSeries.update(newCandle);
+
+                    volumeSeries.update({
+                        time: today,
+                        value: q.volume,
+                        color: q.close >= q.open ? 'rgba(8,153,129,0.5)' : 'rgba(242,54,69,0.5)',
+                    });
+                }
+
+                updateTickerHeader({
+                    ticker: q.ticker,
+                    name: q.name,
+                    exchange: q.exchange,
+                    close: q.close,
+                    open: q.open,
+                });
+
+                updateOhlcLegend(currentCandles[currentCandles.length - 1]);
+            } catch (e) {
+                // Silent fail
+            }
+        }
+
+        function startPolling() {
+            stopPolling();
+            pollQuote();
+            quoteInterval = setInterval(pollQuote, 10000);
+        }
+
+        function stopPolling() {
+            if (quoteInterval) {
+                clearInterval(quoteInterval);
+                quoteInterval = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                startPolling();
+            }
+        });
+
+        // ----- Init -----
+        loadChart().then(() => startPolling());
+    </script>
+</body>
+</html>

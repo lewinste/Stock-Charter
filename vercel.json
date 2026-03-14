@@ -1,0 +1,17 @@
+{
+  "framework": null,
+  "headers": [
+    {
+      "source": "/api/chart",
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=300, stale-while-revalidate=600" }
+      ]
+    },
+    {
+      "source": "/api/quote",
+      "headers": [
+        { "key": "Cache-Control", "value": "s-maxage=5, stale-while-revalidate=10" }
+      ]
+    }
+  ]
+}
