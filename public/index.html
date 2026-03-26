@@ -656,6 +656,108 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
+        /* ===== INDICATORS DROPDOWN ===== */
+        .indicators-wrapper {
+            position: relative;
+        }
+        .indicators-dropdown {
+            display: none;
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            min-width: 240px;
+            z-index: 100;
+            padding: 6px 0;
+            font-family: 'Inter', sans-serif;
+        }
+        .indicators-dropdown.visible { display: block; }
+        .ind-dropdown-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: background 0.12s;
+        }
+        .ind-dropdown-item:hover { background: var(--bg-hover); }
+        .ind-dropdown-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .ind-dropdown-swatch {
+            width: 12px;
+            height: 3px;
+            border-radius: 2px;
+        }
+        .ind-dropdown-name {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        .ind-dropdown-param {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .ind-dropdown-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .ind-toggle {
+            position: relative;
+            width: 32px;
+            height: 18px;
+            background: var(--bg-active);
+            border-radius: 9px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+            padding: 0;
+        }
+        .ind-toggle.on { background: var(--accent); }
+        .ind-toggle::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 14px;
+            height: 14px;
+            background: #fff;
+            border-radius: 50%;
+            transition: transform 0.2s;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+        }
+        .ind-toggle.on::after { transform: translateX(14px); }
+        .ind-gear-btn {
+            width: 22px;
+            height: 22px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .ind-gear-btn:hover {
+            background: var(--bg-hover);
+            color: var(--text-primary);
+        }
+        .ind-gear-btn svg { width: 14px; height: 14px; }
+        .ind-dropdown-sep {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
         /* Toolbar icon button */
         .toolbar-icon-btn {
             display: flex;
@@ -741,6 +843,57 @@
         </div>
 
         <div class="toolbar-separator"></div>
+
+        <div class="indicators-wrapper">
+            <button class="toolbar-icon-btn" id="indicatorsBtn" title="Indicators">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+                </svg>
+                Indicators
+            </button>
+            <div class="indicators-dropdown" id="indicatorsDropdown">
+                <div class="ind-dropdown-item" data-ind="ma">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#2962ff"></span>
+                        <span class="ind-dropdown-name">Moving Average</span>
+                        <span class="ind-dropdown-param" id="indParamMa">(200)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="ma" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="ma" id="indToggleMa"></button>
+                    </div>
+                </div>
+                <div class="ind-dropdown-item" data-ind="supertrend">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#089981"></span>
+                        <span class="ind-dropdown-name">SuperTrend</span>
+                        <span class="ind-dropdown-param" id="indParamSt">(10, 3)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="supertrend" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="supertrend" id="indToggleSt"></button>
+                    </div>
+                </div>
+                <div class="ind-dropdown-sep"></div>
+                <div class="ind-dropdown-item" data-ind="rsi">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#7e57c2"></span>
+                        <span class="ind-dropdown-name">RSI</span>
+                        <span class="ind-dropdown-param" id="indParamRsi">(14)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="rsi" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="rsi" id="indToggleRsi"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
 
         <button class="toolbar-icon-btn" id="markersBtn" title="Add buy/sell markers">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1008,7 +1161,9 @@
             baseLineVisible: false,
         });
 
-        // (70/30 reference lines removed — they cluttered the RSI pane)
+        // RSI overbought/oversold dashed reference lines
+        rsiSeries.createPriceLine({ price: 70, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        rsiSeries.createPriceLine({ price: 30, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
 
         // Store candle data for crosshair legend
         let currentCandles = [];
@@ -1468,6 +1623,80 @@
             if (e.key === 'Enter') document.getElementById('settingsApply').click();
         });
 
+        // ----- Indicators dropdown -----
+        const indicatorsBtn = document.getElementById('indicatorsBtn');
+        const indicatorsDropdown = document.getElementById('indicatorsDropdown');
+
+        indicatorsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            indicatorsDropdown.classList.toggle('visible');
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!indicatorsDropdown.contains(e.target) && e.target !== indicatorsBtn) {
+                indicatorsDropdown.classList.remove('visible');
+            }
+        });
+
+        function syncIndicatorToggles() {
+            const map = { ma: 'indToggleMa', supertrend: 'indToggleSt', rsi: 'indToggleRsi' };
+            for (const [ind, id] of Object.entries(map)) {
+                const toggle = document.getElementById(id);
+                if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
+            }
+        }
+
+        function updateIndicatorParams() {
+            const p = state.params;
+            document.getElementById('indParamMa').textContent = `(${p.ma.period})`;
+            document.getElementById('indParamSt').textContent = `(${p.supertrend.period}, ${p.supertrend.multiplier})`;
+            document.getElementById('indParamRsi').textContent = `(${p.rsi.period})`;
+        }
+
+        // Toggle switches in indicators dropdown
+        document.querySelectorAll('.ind-toggle').forEach(toggle => {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const ind = toggle.dataset.ind;
+                state.indicators[ind] = !state.indicators[ind];
+                toggle.classList.toggle('on', state.indicators[ind]);
+
+                // Sync the legend eye buttons
+                const eyeBtn = document.querySelector(`.eye-btn[data-ind="${ind}"]`);
+                if (eyeBtn) {
+                    const row = eyeBtn.closest('.ind-legend-row');
+                    row.classList.toggle('hidden', !state.indicators[ind]);
+                    eyeBtn.innerHTML = state.indicators[ind] ? eyeOpenSvg : eyeClosedSvg;
+                    eyeBtn.classList.toggle('off', !state.indicators[ind]);
+                }
+                applyVisibility();
+            });
+        });
+
+        // Gear buttons in indicators dropdown
+        document.querySelectorAll('.ind-gear-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                indicatorsDropdown.classList.remove('visible');
+                openSettings(btn.dataset.ind);
+            });
+        });
+
+        // Keep dropdown toggles in sync when eye buttons are clicked on legend
+        const origEyeHandler = () => { syncIndicatorToggles(); };
+        document.querySelectorAll('.eye-btn').forEach(btn => {
+            btn.addEventListener('click', origEyeHandler);
+        });
+
+        // Update param labels when settings are applied
+        const origSettingsApply = document.getElementById('settingsApply');
+        origSettingsApply.addEventListener('click', () => {
+            updateIndicatorParams();
+        });
+
+        syncIndicatorToggles();
+        updateIndicatorParams();
+
         // ----- Keyboard shortcuts -----
         document.addEventListener('keydown', (e) => {
             if (e.key === '/' && document.activeElement !== document.getElementById('tickerInput')) {
@@ -1475,7 +1704,9 @@
                 document.getElementById('tickerInput').focus();
             }
             if (e.key === 'Escape') {
-                if (settingsOverlay.classList.contains('visible')) {
+                if (indicatorsDropdown.classList.contains('visible')) {
+                    indicatorsDropdown.classList.remove('visible');
+                } else if (settingsOverlay.classList.contains('visible')) {
                     closeSettings();
                 } else {
                     document.getElementById('tickerInput').blur();
