@@ -992,17 +992,6 @@
             lastValueVisible: true,
         });
 
-        // Hidden anchor series to align RSI time scale with main chart
-        const rsiAnchorSeries = rsiChart.addLineSeries({
-            color: 'transparent',
-            lineWidth: 0,
-            priceLineVisible: false,
-            lastValueVisible: false,
-            crosshairMarkerVisible: false,
-            priceScaleId: 'anchor',
-            visible: false,
-        });
-
         // RSI overbought/oversold reference lines at 70 and 30
         rsiSeries.createPriceLine({ price: 70, color: '#7e57c2', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: false });
         rsiSeries.createPriceLine({ price: 30, color: '#7e57c2', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: false });
@@ -1222,8 +1211,7 @@
             volMaSeries.setData(data.vol_ma14 || []);
 
             rsiSeries.setData(data.rsi);
-            // Anchor RSI time scale to match candle time range
-            rsiAnchorSeries.setData(data.candles.map(c => ({ time: c.time, value: 50 })));
+
 
             // Update header
             const last = data.candles[data.candles.length - 1];
