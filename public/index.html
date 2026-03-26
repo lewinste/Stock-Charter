@@ -1002,9 +1002,7 @@
             lastValueVisible: false,
         });
 
-        // RSI overbought/oversold reference lines at 70 and 30
-        rsiSeries.createPriceLine({ price: 70, color: '#7e57c2', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: false });
-        rsiSeries.createPriceLine({ price: 30, color: '#7e57c2', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid, axisLabelVisible: false });
+        // (70/30 reference lines removed — they cluttered the RSI pane)
 
         // Store candle data for crosshair legend
         let currentCandles = [];
