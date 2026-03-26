@@ -943,12 +943,22 @@
 
         // ----- Series on main chart (candles + indicators only) -----
         const candleSeries = mainChart.addCandlestickSeries({
-            upColor: '#089981', downColor: '#f23645',
-            borderUpColor: '#089981', borderDownColor: '#f23645',
-            wickUpColor: '#089981', wickDownColor: '#f23645',
+            upColor: '#66bb9a', downColor: '#ef8888',
+            borderUpColor: '#66bb9a', borderDownColor: '#ef8888',
+            wickUpColor: '#66bb9a', wickDownColor: '#ef8888',
         });
 
-        // Invisible series used to place dot markers at exact buy/sell prices
+        // Black outline series for marker dots (added first so it renders behind)
+        const markerOutlineSeries = mainChart.addLineSeries({
+            lineWidth: 0,
+            color: 'transparent',
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            priceScaleId: 'right',
+        });
+
+        // Colored dot series on top of outline
         const markerDotSeries = mainChart.addLineSeries({
             lineWidth: 0,
             color: 'transparent',
@@ -1599,14 +1609,16 @@
         function applyMarkersToChart() {
             if (activeMarkers.length === 0) {
                 candleSeries.setMarkers([]);
+                markerOutlineSeries.setData([]);
+                markerOutlineSeries.setMarkers([]);
                 markerDotSeries.setData([]);
                 markerDotSeries.setMarkers([]);
                 updateMarkersCount();
                 return;
             }
 
-            const BUY_COLOR = '#00C853';   // vivid green — distinct from candle #089981
-            const SELL_COLOR = '#FF1744';   // vivid red — distinct from candle #f23645
+            const BUY_COLOR = '#006B2D';   // dark green — stands out against light candles
+            const SELL_COLOR = '#B71C1C';   // dark red — stands out against light candles
 
             // Arrow markers on the candle series
             const arrows = activeMarkers
@@ -1621,18 +1633,31 @@
 
             candleSeries.setMarkers(arrows);
 
-            // Dot markers on the invisible series at exact prices
+            // Dot markers at exact prices — black outline behind, colored dot on top
             const sorted = [...activeMarkers].sort((a, b) => a.date.localeCompare(b.date));
             const dotData = sorted.map(m => ({ time: m.date, value: m.price }));
+
+            // Black outline (larger circle)
+            const outlineMarkers = sorted.map(m => ({
+                time: m.date,
+                position: 'inBar',
+                color: '#000000',
+                shape: 'circle',
+                size: 0.8,
+                text: '',
+            }));
+            markerOutlineSeries.setData(dotData);
+            markerOutlineSeries.setMarkers(outlineMarkers);
+
+            // Colored dot (smaller, on top)
             const dotMarkers = sorted.map(m => ({
                 time: m.date,
                 position: 'inBar',
                 color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
                 shape: 'circle',
-                size: 1.5,
+                size: 0.5,
                 text: '',
             }));
-
             markerDotSeries.setData(dotData);
             markerDotSeries.setMarkers(dotMarkers);
             updateMarkersCount();
