@@ -1011,6 +1011,7 @@
         let currentCandles = [];
         let currentVolume = [];
         let volumeByTime = {};
+        let rsiByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1114,10 +1115,13 @@
                 if (currentVolume.length > 0) {
                     updateVolLegend(currentVolume[currentVolume.length - 1].value);
                 }
+                rsiLegendVal.textContent = '';
                 return;
             }
             const bar = param.seriesData.get(volumeSeries);
             if (bar) updateVolLegend(bar.value);
+            const rsi = rsiByTime[param.time];
+            rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
         });
 
         // RSI crosshair hover
@@ -1158,6 +1162,8 @@
             const vol = volumeByTime[param.time];
             if (vol != null) updateVolLegend(vol);
             updateIndLegendValues(param);
+            const rsi = rsiByTime[param.time];
+            rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
         });
 
         // ----- Ticker header update -----
@@ -1205,6 +1211,8 @@
             currentVolume = data.volume;
             volumeByTime = {};
             data.volume.forEach(v => { volumeByTime[v.time] = v.value; });
+            rsiByTime = {};
+            data.rsi.forEach(r => { rsiByTime[r.time] = r.value; });
 
             candleSeries.setData(data.candles);
             maSeries.setData(data.ma);
