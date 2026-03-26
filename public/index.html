@@ -906,8 +906,8 @@
         <div class="period-group">
             <button class="period-btn" data-period="1mo">1M</button>
             <button class="period-btn" data-period="3mo">3M</button>
-            <button class="period-btn" data-period="6mo">6M</button>
-            <button class="period-btn active" data-period="1y">1Y</button>
+            <button class="period-btn active" data-period="6mo">6M</button>
+            <button class="period-btn" data-period="1y">1Y</button>
             <button class="period-btn" data-period="2y">2Y</button>
             <button class="period-btn" data-period="5y">5Y</button>
         </div>
@@ -1106,7 +1106,7 @@
         // ----- State -----
         const state = {
             ticker: 'AAPL',
-            period: '1y',
+            period: '6mo',
             indicators: { ma: true, supertrend: true, rsi: true },
             params: {
                 ma: { period: 200 },
@@ -2131,6 +2131,12 @@
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
         });
+
+        // ----- Double-click to scroll to most recent data -----
+        function scrollToLatest() {
+            mainChart.timeScale().scrollToRealTime();
+        }
+        document.querySelector('.chart-wrapper').addEventListener('dblclick', scrollToLatest);
 
         // ----- Live quote polling (every 10s) -----
         let quoteInterval = null;
