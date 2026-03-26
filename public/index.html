@@ -757,6 +757,76 @@
             background: var(--border);
             margin: 4px 0;
         }
+        .ind-add-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            padding: 8px 14px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--accent);
+            transition: background 0.12s;
+        }
+        .ind-add-btn:hover { background: var(--bg-hover); }
+        .ind-add-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .ind-picker {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 100%;
+            margin-left: 4px;
+            background: #fff;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            z-index: 101;
+            padding: 6px 0;
+        }
+        .ind-picker.visible { display: block; }
+        .ind-picker-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-primary);
+            transition: background 0.12s;
+            border: none;
+            background: none;
+            width: 100%;
+            font-family: 'Inter', sans-serif;
+        }
+        .ind-picker-item:hover { background: var(--bg-hover); }
+        .ind-picker-item .ind-dropdown-swatch { flex-shrink: 0; }
+        .ind-picker-desc {
+            font-size: 11px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+        .ind-remove-btn {
+            width: 18px;
+            height: 18px;
+            border: none;
+            background: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+            padding: 0;
+        }
+        .ind-remove-btn:hover { background: var(--red-bg); color: var(--red); }
+        .ind-remove-btn svg { width: 12px; height: 12px; }
 
         /* Toolbar icon button */
         .toolbar-icon-btn {
@@ -890,6 +960,32 @@
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                         </button>
                         <button class="ind-toggle on" data-ind="rsi" id="indToggleRsi"></button>
+                    </div>
+                </div>
+                <div id="customIndicatorsList"></div>
+                <div class="ind-dropdown-sep"></div>
+                <div style="position:relative">
+                    <button class="ind-add-btn" id="indAddBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        Add indicator…
+                    </button>
+                    <div class="ind-picker" id="indPicker">
+                        <button class="ind-picker-item" data-type="ema">
+                            <span class="ind-dropdown-swatch" style="background:#ff9800"></span>
+                            <div>EMA<br><span class="ind-picker-desc">Exponential Moving Average</span></div>
+                        </button>
+                        <button class="ind-picker-item" data-type="bb">
+                            <span class="ind-dropdown-swatch" style="background:#26a69a"></span>
+                            <div>Bollinger Bands<br><span class="ind-picker-desc">Volatility bands around SMA</span></div>
+                        </button>
+                        <button class="ind-picker-item" data-type="sma">
+                            <span class="ind-dropdown-swatch" style="background:#e91e63"></span>
+                            <div>SMA<br><span class="ind-picker-desc">Simple Moving Average</span></div>
+                        </button>
+                        <button class="ind-picker-item" data-type="vwap">
+                            <span class="ind-dropdown-swatch" style="background:#00bcd4"></span>
+                            <div>VWAP<br><span class="ind-picker-desc">Volume Weighted Avg Price</span></div>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1254,6 +1350,7 @@
             maLegendVal.textContent = '';
             stLegendVal.textContent = '';
             rsiLegendVal.textContent = '';
+            if (typeof updateCustomIndLegendValues === 'function') updateCustomIndLegendValues(null);
         }
 
         // ----- Crosshair sync across panes -----
@@ -1332,6 +1429,7 @@
             const vol = volumeByTime[param.time];
             if (vol != null) updateVolLegend(vol, param.time);
             updateIndLegendValues(param);
+            updateCustomIndLegendValues(param);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
         });
@@ -1395,6 +1493,7 @@
 
             rsiSeries.setData(data.rsi);
 
+            if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
             // Update header
             const last = data.candles[data.candles.length - 1];
@@ -1715,6 +1814,299 @@
 
         syncIndicatorToggles();
         updateIndicatorParams();
+
+        // ----- Custom (dynamic) indicators -----
+        const CUSTOM_IND_COLORS = {
+            ema: '#ff9800', bb: '#26a69a', sma: '#e91e63', vwap: '#00bcd4',
+        };
+        const CUSTOM_IND_NAMES = {
+            ema: 'EMA', bb: 'Bollinger Bands', sma: 'SMA', vwap: 'VWAP',
+        };
+        const CUSTOM_IND_DEFAULTS = {
+            ema: { period: 20 },
+            bb: { period: 20, stddev: 2 },
+            sma: { period: 50 },
+            vwap: {},
+        };
+        let customIndCounter = 0;
+        const customIndicators = []; // { id, type, params, series[], visible, color }
+
+        function computeEMA(candles, period) {
+            const data = [];
+            const k = 2 / (period + 1);
+            let ema = null;
+            for (const c of candles) {
+                if (ema === null) { ema = c.close; }
+                else { ema = c.close * k + ema * (1 - k); }
+                if (candles.indexOf(c) >= period - 1) {
+                    data.push({ time: c.time, value: Math.round(ema * 100) / 100 });
+                }
+            }
+            return data;
+        }
+
+        function computeSMA(candles, period) {
+            const data = [];
+            for (let i = period - 1; i < candles.length; i++) {
+                let sum = 0;
+                for (let j = i - period + 1; j <= i; j++) sum += candles[j].close;
+                data.push({ time: candles[i].time, value: Math.round((sum / period) * 100) / 100 });
+            }
+            return data;
+        }
+
+        function computeBB(candles, period, stddev) {
+            const middle = [], upper = [], lower = [];
+            for (let i = period - 1; i < candles.length; i++) {
+                let sum = 0;
+                for (let j = i - period + 1; j <= i; j++) sum += candles[j].close;
+                const avg = sum / period;
+                let sqSum = 0;
+                for (let j = i - period + 1; j <= i; j++) sqSum += (candles[j].close - avg) ** 2;
+                const sd = Math.sqrt(sqSum / period);
+                const t = candles[i].time;
+                middle.push({ time: t, value: Math.round(avg * 100) / 100 });
+                upper.push({ time: t, value: Math.round((avg + stddev * sd) * 100) / 100 });
+                lower.push({ time: t, value: Math.round((avg - stddev * sd) * 100) / 100 });
+            }
+            return { middle, upper, lower };
+        }
+
+        function computeVWAP(candles) {
+            const data = [];
+            let cumVolPrice = 0, cumVol = 0;
+            for (const c of candles) {
+                const tp = (c.high + c.low + c.close) / 3;
+                const vol = volumeByTime[c.time] || 0;
+                cumVolPrice += tp * vol;
+                cumVol += vol;
+                if (cumVol > 0) {
+                    data.push({ time: c.time, value: Math.round((cumVolPrice / cumVol) * 100) / 100 });
+                }
+            }
+            return data;
+        }
+
+        function addCustomIndicator(type) {
+            const id = 'cust_' + (++customIndCounter);
+            const color = CUSTOM_IND_COLORS[type];
+            const params = { ...CUSTOM_IND_DEFAULTS[type] };
+            const seriesList = [];
+
+            if (type === 'bb') {
+                const mid = mainChart.addLineSeries({ color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+                const up = mainChart.addLineSeries({ color: color, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+                const lo = mainChart.addLineSeries({ color: color, lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+                seriesList.push(mid, up, lo);
+            } else {
+                const s = mainChart.addLineSeries({ color, lineWidth: 1.5, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+                seriesList.push(s);
+            }
+
+            const ind = { id, type, params, series: seriesList, visible: true, color };
+            customIndicators.push(ind);
+            recomputeCustomIndicator(ind);
+            renderCustomIndicatorsList();
+            syncCustomIndDropdown();
+            return ind;
+        }
+
+        function recomputeCustomIndicator(ind) {
+            if (currentCandles.length === 0) return;
+            if (ind.type === 'ema') {
+                ind.series[0].setData(computeEMA(currentCandles, ind.params.period));
+            } else if (ind.type === 'sma') {
+                ind.series[0].setData(computeSMA(currentCandles, ind.params.period));
+            } else if (ind.type === 'bb') {
+                const { middle, upper, lower } = computeBB(currentCandles, ind.params.period, ind.params.stddev);
+                ind.series[0].setData(middle);
+                ind.series[1].setData(upper);
+                ind.series[2].setData(lower);
+            } else if (ind.type === 'vwap') {
+                ind.series[0].setData(computeVWAP(currentCandles));
+            }
+        }
+
+        function recomputeAllCustomIndicators() {
+            customIndicators.forEach(ind => recomputeCustomIndicator(ind));
+        }
+
+        function removeCustomIndicator(id) {
+            const idx = customIndicators.findIndex(i => i.id === id);
+            if (idx < 0) return;
+            const ind = customIndicators[idx];
+            ind.series.forEach(s => mainChart.removeSeries(s));
+            customIndicators.splice(idx, 1);
+            renderCustomIndicatorsList();
+            syncCustomIndDropdown();
+        }
+
+        function getCustomParamLabel(ind) {
+            if (ind.type === 'ema' || ind.type === 'sma') return `(${ind.params.period})`;
+            if (ind.type === 'bb') return `(${ind.params.period}, ${ind.params.stddev})`;
+            if (ind.type === 'vwap') return '';
+            return '';
+        }
+
+        const gearSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>';
+
+        function renderCustomIndicatorsList() {
+            const container = document.getElementById('customIndicatorsList');
+            container.innerHTML = customIndicators.map(ind => `
+                <div class="ind-dropdown-item" data-cust-id="${ind.id}">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:${ind.color}"></span>
+                        <span class="ind-dropdown-name">${CUSTOM_IND_NAMES[ind.type]}</span>
+                        <span class="ind-dropdown-param">${getCustomParamLabel(ind)}</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn cust-gear-btn" data-cust-id="${ind.id}" title="Settings">${gearSvg}</button>
+                        <button class="ind-toggle ${ind.visible ? 'on' : ''} cust-toggle-btn" data-cust-id="${ind.id}"></button>
+                        <button class="ind-remove-btn" data-cust-id="${ind.id}" title="Remove">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Bind events
+            container.querySelectorAll('.cust-toggle-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const ind = customIndicators.find(i => i.id === btn.dataset.custId);
+                    if (!ind) return;
+                    ind.visible = !ind.visible;
+                    btn.classList.toggle('on', ind.visible);
+                    ind.series.forEach(s => s.applyOptions({ visible: ind.visible }));
+                    syncCustomIndLegend();
+                });
+            });
+            container.querySelectorAll('.ind-remove-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    removeCustomIndicator(btn.dataset.custId);
+                });
+            });
+            container.querySelectorAll('.cust-gear-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    openCustomSettings(btn.dataset.custId);
+                });
+            });
+            syncCustomIndLegend();
+        }
+
+        function syncCustomIndLegend() {
+            const legend = document.getElementById('mainIndLegend');
+            legend.querySelectorAll('.cust-legend-row').forEach(el => el.remove());
+            customIndicators.forEach(ind => {
+                const row = document.createElement('div');
+                row.className = 'ind-legend-row cust-legend-row';
+                row.dataset.custId = ind.id;
+                row.style.display = ind.visible ? '' : 'none';
+                row.innerHTML = `
+                    <span class="ind-name" style="color:${ind.color}">${CUSTOM_IND_NAMES[ind.type]} ${getCustomParamLabel(ind)}</span>
+                    <span class="ind-val cust-legend-val" data-cust-id="${ind.id}" style="color:${ind.color}"></span>
+                `;
+                legend.appendChild(row);
+            });
+        }
+
+        function syncCustomIndDropdown() {
+            // No-op placeholder for future sync needs
+        }
+
+        function openCustomSettings(id) {
+            const ind = customIndicators.find(i => i.id === id);
+            if (!ind) return;
+            indicatorsDropdown.classList.remove('visible');
+            indPicker.classList.remove('visible');
+
+            const fields = [];
+            if (ind.type === 'ema' || ind.type === 'sma') {
+                fields.push({ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 });
+            } else if (ind.type === 'bb') {
+                fields.push({ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 });
+                fields.push({ key: 'stddev', label: 'Std Deviations', type: 'number', min: 0.1, max: 10, step: 0.1 });
+            }
+            if (fields.length === 0) return;
+
+            currentSettingsInd = null;
+            settingsTitle.textContent = CUSTOM_IND_NAMES[ind.type] + ' Settings';
+            settingsBody.innerHTML = fields.map(f => {
+                const val = ind.params[f.key];
+                const step = f.step || 1;
+                return `<div class="settings-field">
+                    <label>${f.label}</label>
+                    <input type="number" data-key="${f.key}" value="${val}" min="${f.min}" max="${f.max}" step="${step}">
+                </div>`;
+            }).join('');
+            settingsOverlay.classList.add('visible');
+            settingsBody.querySelector('input')?.focus();
+
+            // Override apply for custom indicator
+            const applyBtn = document.getElementById('settingsApply');
+            const customApply = () => {
+                settingsBody.querySelectorAll('input').forEach(inp => {
+                    const val = parseFloat(inp.value);
+                    if (!isNaN(val)) ind.params[inp.dataset.key] = val;
+                });
+                recomputeCustomIndicator(ind);
+                renderCustomIndicatorsList();
+                closeSettings();
+                applyBtn.removeEventListener('click', customApply);
+            };
+            applyBtn.addEventListener('click', customApply);
+            // Clean up when cancelled
+            const cancelCleanup = () => {
+                applyBtn.removeEventListener('click', customApply);
+                document.getElementById('settingsCancel').removeEventListener('click', cancelCleanup);
+            };
+            document.getElementById('settingsCancel').addEventListener('click', cancelCleanup);
+        }
+
+        // Picker toggle
+        const indAddBtn = document.getElementById('indAddBtn');
+        const indPicker = document.getElementById('indPicker');
+
+        indAddBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            indPicker.classList.toggle('visible');
+        });
+
+        indPicker.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+        document.querySelectorAll('.ind-picker-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                addCustomIndicator(item.dataset.type);
+                indPicker.classList.remove('visible');
+            });
+        });
+
+        // Close picker when dropdown closes
+        const origIndicatorsObserver = new MutationObserver(() => {
+            if (!indicatorsDropdown.classList.contains('visible')) {
+                indPicker.classList.remove('visible');
+            }
+        });
+        origIndicatorsObserver.observe(indicatorsDropdown, { attributes: true, attributeFilter: ['class'] });
+
+        // Update custom indicator legend values on crosshair move
+        function updateCustomIndLegendValues(param) {
+            customIndicators.forEach(ind => {
+                const valEl = document.querySelector(`.cust-legend-val[data-cust-id="${ind.id}"]`);
+                if (!valEl) return;
+                if (param && param.seriesData) {
+                    const d = param.seriesData.get(ind.series[0]);
+                    valEl.textContent = d ? d.value.toFixed(2) : '';
+                } else {
+                    valEl.textContent = '';
+                }
+            });
+        }
 
         // ----- Keyboard shortcuts -----
         document.addEventListener('keydown', (e) => {
