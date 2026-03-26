@@ -946,6 +946,8 @@
             upColor: '#66bb9a', downColor: '#ef8888',
             borderUpColor: '#66bb9a', borderDownColor: '#ef8888',
             wickUpColor: '#66bb9a', wickDownColor: '#ef8888',
+            priceLineVisible: false,
+            lastValueVisible: false,
         });
 
         // Black outline series for marker dots (added first so it renders behind)
@@ -970,21 +972,23 @@
 
         const maSeries = mainChart.addLineSeries({
             color: '#2962ff', lineWidth: 1.5,
-            priceLineVisible: true, priceLineColor: '#2962ff', priceLineStyle: LightweightCharts.LineStyle.Dashed,
-            lastValueVisible: true,
+            priceLineVisible: false,
+            lastValueVisible: false,
             crosshairMarkerVisible: false,
         });
 
         const supertrendSeries = mainChart.addLineSeries({
             lineWidth: 2,
-            priceLineVisible: true, priceLineStyle: LightweightCharts.LineStyle.Dashed,
-            lastValueVisible: true,
+            priceLineVisible: false,
+            lastValueVisible: false,
             crosshairMarkerVisible: false,
         });
 
         // ----- Series on volume chart -----
         const volumeSeries = volumeChart.addHistogramSeries({
             priceFormat: { type: 'volume' },
+            priceLineVisible: false,
+            lastValueVisible: false,
         });
 
         const volMaSeries = volumeChart.addLineSeries({
