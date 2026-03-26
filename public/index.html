@@ -1169,6 +1169,7 @@
         let currentCandles = [];
         let currentVolume = [];
         let volumeByTime = {};
+        let volMaByTime = {};
         let rsiByTime = {};
 
         // ----- Infinite scroll state -----
@@ -1210,12 +1211,20 @@
             return v.toString();
         }
 
-        function updateVolLegend(vol) {
+        function updateVolLegend(vol, time) {
             if (vol == null) {
                 volLegend.innerHTML = '';
                 return;
             }
-            volLegend.textContent = formatVolume(vol);
+            const avgVol = time != null ? volMaByTime[time] : null;
+            if (avgVol != null && avgVol > 0) {
+                const pctDiff = ((vol - avgVol) / avgVol) * 100;
+                const sign = pctDiff >= 0 ? '+' : '';
+                const color = pctDiff >= 0 ? 'var(--green)' : 'var(--red)';
+                volLegend.innerHTML = `${formatVolume(vol)} &nbsp;<span style="color:var(--text-muted)">Avg ${formatVolume(avgVol)}</span> <span style="color:${color}">(${sign}${Math.round(pctDiff)}%)</span>`;
+            } else {
+                volLegend.textContent = formatVolume(vol);
+            }
         }
 
         // ----- Indicator legend value updates -----
@@ -1271,13 +1280,14 @@
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(volumeSeries)) {
                 if (currentVolume.length > 0) {
-                    updateVolLegend(currentVolume[currentVolume.length - 1].value);
+                    const lastV = currentVolume[currentVolume.length - 1];
+                    updateVolLegend(lastV.value, lastV.time);
                 }
                 rsiLegendVal.textContent = '';
                 return;
             }
             const bar = param.seriesData.get(volumeSeries);
-            if (bar) updateVolLegend(bar.value);
+            if (bar) updateVolLegend(bar.value, param.time);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
         });
@@ -1291,10 +1301,11 @@
             updateRsiLegendValue(param);
             if (param.time) {
                 const vol = volumeByTime[param.time];
-                if (vol != null) updateVolLegend(vol);
+                if (vol != null) updateVolLegend(vol, param.time);
             } else {
                 if (currentVolume.length > 0) {
-                    updateVolLegend(currentVolume[currentVolume.length - 1].value);
+                    const lastV = currentVolume[currentVolume.length - 1];
+                    updateVolLegend(lastV.value, lastV.time);
                 }
             }
         });
@@ -1310,7 +1321,8 @@
                     updateOhlcLegend(currentCandles[currentCandles.length - 1]);
                 }
                 if (currentVolume.length > 0) {
-                    updateVolLegend(currentVolume[currentVolume.length - 1].value);
+                    const lastV = currentVolume[currentVolume.length - 1];
+                    updateVolLegend(lastV.value, lastV.time);
                 }
                 showLastIndValues();
                 return;
@@ -1318,7 +1330,7 @@
             const candle = param.seriesData.get(candleSeries);
             if (candle) updateOhlcLegend(candle);
             const vol = volumeByTime[param.time];
-            if (vol != null) updateVolLegend(vol);
+            if (vol != null) updateVolLegend(vol, param.time);
             updateIndLegendValues(param);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
@@ -1369,6 +1381,8 @@
             currentVolume = data.volume;
             volumeByTime = {};
             data.volume.forEach(v => { volumeByTime[v.time] = v.value; });
+            volMaByTime = {};
+            if (data.vol_ma14) data.vol_ma14.forEach(v => { volMaByTime[v.time] = v.value; });
             rsiByTime = {};
             data.rsi.forEach(r => { rsiByTime[r.time] = r.value; });
 
@@ -1402,7 +1416,10 @@
             }
 
             if (last) updateOhlcLegend(last);
-            if (currentVolume.length > 0) updateVolLegend(currentVolume[currentVolume.length - 1].value);
+            if (currentVolume.length > 0) {
+                const lastV = currentVolume[currentVolume.length - 1];
+                updateVolLegend(lastV.value, lastV.time);
+            }
 
             if (fitContent) {
                 mainChart.timeScale().fitContent();
