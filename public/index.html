@@ -948,6 +948,16 @@
             wickUpColor: '#089981', wickDownColor: '#f23645',
         });
 
+        // Invisible series used to place dot markers at exact buy/sell prices
+        const markerDotSeries = mainChart.addLineSeries({
+            lineWidth: 0,
+            color: 'transparent',
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            priceScaleId: 'right',
+        });
+
         const maSeries = mainChart.addLineSeries({
             color: '#2962ff', lineWidth: 1.5,
             priceLineVisible: true, priceLineColor: '#2962ff', priceLineStyle: LightweightCharts.LineStyle.Dashed,
@@ -1593,22 +1603,42 @@
         function applyMarkersToChart() {
             if (activeMarkers.length === 0) {
                 candleSeries.setMarkers([]);
+                markerDotSeries.setData([]);
+                markerDotSeries.setMarkers([]);
                 updateMarkersCount();
                 return;
             }
 
-            // Build lightweight-charts markers sorted by time
-            const markers = activeMarkers
+            const BUY_COLOR = '#00C853';   // vivid green — distinct from candle #089981
+            const SELL_COLOR = '#FF1744';   // vivid red — distinct from candle #f23645
+
+            // Arrow markers on the candle series
+            const arrows = activeMarkers
                 .map(m => ({
                     time: m.date,
                     position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
-                    color: m.event === 'buy' ? '#089981' : '#f23645',
+                    color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
                     shape: m.event === 'buy' ? 'arrowUp' : 'arrowDown',
                     text: (m.event === 'buy' ? 'BUY' : 'SELL') + ' @ ' + m.price.toFixed(2),
                 }))
                 .sort((a, b) => a.time.localeCompare(b.time));
 
-            candleSeries.setMarkers(markers);
+            candleSeries.setMarkers(arrows);
+
+            // Dot markers on the invisible series at exact prices
+            const sorted = [...activeMarkers].sort((a, b) => a.date.localeCompare(b.date));
+            const dotData = sorted.map(m => ({ time: m.date, value: m.price }));
+            const dotMarkers = sorted.map(m => ({
+                time: m.date,
+                position: 'inBar',
+                color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
+                shape: 'circle',
+                size: 1.5,
+                text: '',
+            }));
+
+            markerDotSeries.setData(dotData);
+            markerDotSeries.setMarkers(dotMarkers);
             updateMarkersCount();
         }
 
