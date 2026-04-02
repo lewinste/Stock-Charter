@@ -335,7 +335,7 @@
             font-size: 13px;
             color: var(--text-secondary);
         }
-        .settings-field input {
+        .settings-field input[type="number"] {
             width: 70px;
             padding: 5px 8px;
             border: 1px solid var(--border);
@@ -345,7 +345,30 @@
             text-align: right;
             outline: none;
         }
-        .settings-field input:focus {
+        .settings-field input[type="number"]:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px rgba(41,98,255,0.15);
+        }
+        .settings-field input[type="color"] {
+            width: 36px;
+            height: 30px;
+            padding: 2px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            cursor: pointer;
+            background: none;
+        }
+        .settings-field select {
+            padding: 5px 8px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 13px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            background: #fff;
+            cursor: pointer;
+        }
+        .settings-field select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 0 2px rgba(41,98,255,0.15);
         }
@@ -1078,7 +1101,8 @@
         <div class="markers-dialog">
             <h3>Add Buy/Sell Markers</h3>
             <p class="hint">
-                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"}</code>
+                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"}</code><br>
+                For patterns, add <code>"type": "Bearish Engulfing"</code> etc.
             </p>
             <textarea class="markers-textarea" id="markersTextarea" placeholder='[
   {"date": "2025-01-15", "price": 150.25, "event": "buy"},
@@ -1109,9 +1133,9 @@
             period: '6mo',
             indicators: { ma: true, supertrend: true, rsi: true },
             params: {
-                ma: { period: 200 },
-                supertrend: { period: 10, multiplier: 3.0 },
-                rsi: { period: 14 },
+                ma: { period: 200, color: '#2962ff', lineWidth: 1.5, lineStyle: 0 },
+                supertrend: { period: 10, multiplier: 3.0, lineWidth: 2, lineStyle: 0 },
+                rsi: { period: 14, color: '#7e57c2', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -1665,23 +1689,62 @@
         const settingsTitle = document.getElementById('settingsTitle');
         let currentSettingsInd = null;
 
+        const LINE_STYLE_OPTIONS = [
+            { value: 0, label: 'Solid' },
+            { value: 1, label: 'Dotted' },
+            { value: 2, label: 'Dashed' },
+            { value: 3, label: 'Large Dashed' },
+            { value: 4, label: 'Sparse Dotted' },
+        ];
+
+        const styleFields = [
+            { key: 'color', label: 'Color', type: 'color' },
+            { key: 'lineWidth', label: 'Thickness', type: 'number', min: 0.5, max: 6, step: 0.5 },
+            { key: 'lineStyle', label: 'Style', type: 'select', options: LINE_STYLE_OPTIONS },
+        ];
+
         const settingsConfig = {
             ma: {
                 title: 'MA Settings',
-                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 }],
+                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 }, ...styleFields],
             },
             supertrend: {
                 title: 'SuperTrend Settings',
                 fields: [
                     { key: 'period', label: 'ATR Period', type: 'number', min: 1, max: 100 },
                     { key: 'multiplier', label: 'Multiplier', type: 'number', min: 0.1, max: 20, step: 0.1 },
+                    { key: 'lineWidth', label: 'Thickness', type: 'number', min: 0.5, max: 6, step: 0.5 },
+                    { key: 'lineStyle', label: 'Style', type: 'select', options: LINE_STYLE_OPTIONS },
                 ],
             },
             rsi: {
                 title: 'RSI Settings',
-                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 100 }],
+                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 100 }, ...styleFields],
             },
         };
+
+        function renderSettingsField(f, val) {
+            if (f.type === 'color') {
+                return `<div class="settings-field">
+                    <label>${f.label}</label>
+                    <input type="color" data-key="${f.key}" value="${val}">
+                </div>`;
+            }
+            if (f.type === 'select') {
+                const opts = f.options.map(o =>
+                    `<option value="${o.value}" ${String(o.value) === String(val) ? 'selected' : ''}>${o.label}</option>`
+                ).join('');
+                return `<div class="settings-field">
+                    <label>${f.label}</label>
+                    <select data-key="${f.key}">${opts}</select>
+                </div>`;
+            }
+            const step = f.step || 1;
+            return `<div class="settings-field">
+                <label>${f.label}</label>
+                <input type="number" data-key="${f.key}" value="${val}" min="${f.min}" max="${f.max}" step="${step}">
+            </div>`;
+        }
 
         function openSettings(ind) {
             currentSettingsInd = ind;
@@ -1689,11 +1752,7 @@
             settingsTitle.textContent = cfg.title;
             settingsBody.innerHTML = cfg.fields.map(f => {
                 const val = state.params[ind][f.key];
-                const step = f.step || 1;
-                return `<div class="settings-field">
-                    <label>${f.label}</label>
-                    <input type="number" data-key="${f.key}" value="${val}" min="${f.min}" max="${f.max}" step="${step}">
-                </div>`;
+                return renderSettingsField(f, val);
             }).join('');
             settingsOverlay.classList.add('visible');
             settingsBody.querySelector('input')?.focus();
@@ -1706,9 +1765,15 @@
 
         function updateLegendNames() {
             const p = state.params;
-            document.getElementById('maLegendName').textContent = `MA (${p.ma.period}, close)`;
+            const maName = document.getElementById('maLegendName');
+            maName.textContent = `MA (${p.ma.period}, close)`;
+            maName.style.color = p.ma.color;
+            document.getElementById('maLegendVal').style.color = p.ma.color;
             document.getElementById('stLegendName').textContent = `SuperTrend (${p.supertrend.period}, ${p.supertrend.multiplier})`;
-            document.getElementById('rsiLegendName').textContent = `RSI (${p.rsi.period})`;
+            const rsiName = document.getElementById('rsiLegendName');
+            rsiName.textContent = `RSI (${p.rsi.period})`;
+            rsiName.style.color = p.rsi.color;
+            document.getElementById('rsiLegendVal').style.color = p.rsi.color;
         }
 
         document.querySelectorAll('.gear-btn').forEach(btn => {
@@ -1723,15 +1788,34 @@
             if (e.target === settingsOverlay) closeSettings();
         });
 
+        function readSettingsValues(container, target) {
+            container.querySelectorAll('input, select').forEach(el => {
+                const key = el.dataset.key;
+                if (el.type === 'color') {
+                    target[key] = el.value;
+                } else if (el.tagName === 'SELECT') {
+                    target[key] = parseInt(el.value);
+                } else {
+                    const val = parseFloat(el.value);
+                    if (!isNaN(val)) target[key] = val;
+                }
+            });
+        }
+
+        function applyBuiltInStyles() {
+            const mp = state.params.ma;
+            maSeries.applyOptions({ color: mp.color, lineWidth: mp.lineWidth, lineStyle: mp.lineStyle });
+            const sp = state.params.supertrend;
+            supertrendSeries.applyOptions({ lineWidth: sp.lineWidth, lineStyle: sp.lineStyle });
+            const rp = state.params.rsi;
+            rsiSeries.applyOptions({ color: rp.color, lineWidth: rp.lineWidth, lineStyle: rp.lineStyle });
+        }
+
         document.getElementById('settingsApply').addEventListener('click', () => {
             if (!currentSettingsInd) return;
-            const inputs = settingsBody.querySelectorAll('input');
-            inputs.forEach(inp => {
-                const key = inp.dataset.key;
-                const val = parseFloat(inp.value);
-                if (!isNaN(val)) state.params[currentSettingsInd][key] = val;
-            });
+            readSettingsValues(settingsBody, state.params[currentSettingsInd]);
             updateLegendNames();
+            applyBuiltInStyles();
             closeSettings();
             loadChart();
         });
@@ -1823,10 +1907,10 @@
             ema: 'EMA', bb: 'Bollinger Bands', sma: 'SMA', vwap: 'VWAP',
         };
         const CUSTOM_IND_DEFAULTS = {
-            ema: { period: 20 },
-            bb: { period: 20, stddev: 2 },
-            sma: { period: 50 },
-            vwap: {},
+            ema: { period: 20, color: '#ff9800', lineWidth: 1.5, lineStyle: 0 },
+            bb: { period: 20, stddev: 2, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
+            sma: { period: 50, color: '#e91e63', lineWidth: 1.5, lineStyle: 0 },
+            vwap: { color: '#00bcd4', lineWidth: 1.5, lineStyle: 0 },
         };
         let customIndCounter = 0;
         const customIndicators = []; // { id, type, params, series[], visible, color }
@@ -2016,6 +2100,18 @@
             // No-op placeholder for future sync needs
         }
 
+        function applyCustomIndStyles(ind) {
+            const p = ind.params;
+            ind.color = p.color;
+            if (ind.type === 'bb') {
+                ind.series[0].applyOptions({ color: p.color, lineWidth: p.lineWidth, lineStyle: p.lineStyle });
+                ind.series[1].applyOptions({ color: p.color, lineWidth: Math.max(1, p.lineWidth - 0.5), lineStyle: p.lineStyle });
+                ind.series[2].applyOptions({ color: p.color, lineWidth: Math.max(1, p.lineWidth - 0.5), lineStyle: p.lineStyle });
+            } else {
+                ind.series[0].applyOptions({ color: p.color, lineWidth: p.lineWidth, lineStyle: p.lineStyle });
+            }
+        }
+
         function openCustomSettings(id) {
             const ind = customIndicators.find(i => i.id === id);
             if (!ind) return;
@@ -2029,35 +2125,26 @@
                 fields.push({ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 });
                 fields.push({ key: 'stddev', label: 'Std Deviations', type: 'number', min: 0.1, max: 10, step: 0.1 });
             }
-            if (fields.length === 0) return;
+            // All custom indicators get style fields
+            fields.push(...styleFields);
 
             currentSettingsInd = null;
             settingsTitle.textContent = CUSTOM_IND_NAMES[ind.type] + ' Settings';
-            settingsBody.innerHTML = fields.map(f => {
-                const val = ind.params[f.key];
-                const step = f.step || 1;
-                return `<div class="settings-field">
-                    <label>${f.label}</label>
-                    <input type="number" data-key="${f.key}" value="${val}" min="${f.min}" max="${f.max}" step="${step}">
-                </div>`;
-            }).join('');
+            settingsBody.innerHTML = fields.map(f => renderSettingsField(f, ind.params[f.key])).join('');
             settingsOverlay.classList.add('visible');
             settingsBody.querySelector('input')?.focus();
 
             // Override apply for custom indicator
             const applyBtn = document.getElementById('settingsApply');
             const customApply = () => {
-                settingsBody.querySelectorAll('input').forEach(inp => {
-                    const val = parseFloat(inp.value);
-                    if (!isNaN(val)) ind.params[inp.dataset.key] = val;
-                });
+                readSettingsValues(settingsBody, ind.params);
+                applyCustomIndStyles(ind);
                 recomputeCustomIndicator(ind);
                 renderCustomIndicatorsList();
                 closeSettings();
                 applyBtn.removeEventListener('click', customApply);
             };
             applyBtn.addEventListener('click', customApply);
-            // Clean up when cancelled
             const cancelCleanup = () => {
                 applyBtn.removeEventListener('click', customApply);
                 document.getElementById('settingsCancel').removeEventListener('click', cancelCleanup);
@@ -2269,47 +2356,55 @@
                 return;
             }
 
-            const BUY_COLOR = '#006B2D';   // dark green — stands out against light candles
-            const SELL_COLOR = '#B71C1C';   // dark red — stands out against light candles
+            const BUY_COLOR = '#006B2D';
+            const SELL_COLOR = '#B71C1C';
+            const PATTERN_COLOR = '#D32F2F';
 
-            // Arrow markers on the candle series
+            // Arrow markers on the candle series (buy/sell + pattern)
             const arrows = activeMarkers
-                .map(m => ({
-                    time: m.date,
-                    position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
-                    color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
-                    shape: m.event === 'buy' ? 'arrowUp' : 'arrowDown',
-                    text: (m.event === 'buy' ? 'BUY' : 'SELL') + ' @ ' + m.price.toFixed(2),
-                }))
+                .map(m => {
+                    if (m.event === 'pattern') {
+                        return {
+                            time: m.date,
+                            position: 'aboveBar',
+                            color: PATTERN_COLOR,
+                            shape: 'arrowDown',
+                            text: m.type || 'Pattern',
+                        };
+                    }
+                    return {
+                        time: m.date,
+                        position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
+                        color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
+                        shape: m.event === 'buy' ? 'arrowUp' : 'arrowDown',
+                        text: (m.event === 'buy' ? 'BUY' : 'SELL') + ' @ ' + m.price.toFixed(2),
+                    };
+                })
                 .sort((a, b) => a.time.localeCompare(b.time));
 
             candleSeries.setMarkers(arrows);
 
-            // Dot markers at exact prices — black outline behind, colored dot on top
+            // Dot markers at exact prices for buy/sell; outline triangles for patterns
             const sorted = [...activeMarkers].sort((a, b) => a.date.localeCompare(b.date));
             const dotData = sorted.map(m => ({ time: m.date, value: m.price }));
 
-            // Black outline (larger circle)
-            const outlineMarkers = sorted.map(m => ({
-                time: m.date,
-                position: 'inBar',
-                color: '#000000',
-                shape: 'circle',
-                size: 0.8,
-                text: '',
-            }));
+            // Outline series: black circles for buy/sell, black triangles for patterns
+            const outlineMarkers = sorted.map(m => {
+                if (m.event === 'pattern') {
+                    return { time: m.date, position: 'aboveBar', color: '#000000', shape: 'arrowDown', size: 1.2, text: '' };
+                }
+                return { time: m.date, position: 'inBar', color: '#000000', shape: 'circle', size: 0.8, text: '' };
+            });
             markerOutlineSeries.setData(dotData);
             markerOutlineSeries.setMarkers(outlineMarkers);
 
-            // Colored dot (smaller, on top)
-            const dotMarkers = sorted.map(m => ({
-                time: m.date,
-                position: 'inBar',
-                color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
-                shape: 'circle',
-                size: 0.5,
-                text: '',
-            }));
+            // Dot series: colored circles for buy/sell, red triangles for patterns
+            const dotMarkers = sorted.map(m => {
+                if (m.event === 'pattern') {
+                    return { time: m.date, position: 'aboveBar', color: PATTERN_COLOR, shape: 'arrowDown', size: 0.8, text: '' };
+                }
+                return { time: m.date, position: 'inBar', color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR, shape: 'circle', size: 0.5, text: '' };
+            });
             markerDotSeries.setData(dotData);
             markerDotSeries.setMarkers(dotMarkers);
             updateMarkersCount();
@@ -2336,8 +2431,11 @@
                     if (!entry.date || entry.price == null || !entry.event) {
                         throw new Error('Each entry needs date, price, event');
                     }
-                    if (entry.event !== 'buy' && entry.event !== 'sell') {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy" or "sell"`);
+                    if (entry.event !== 'buy' && entry.event !== 'sell' && entry.event !== 'pattern') {
+                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", or "pattern"`);
+                    }
+                    if (entry.event === 'pattern' && !entry.type) {
+                        throw new Error('Pattern events require a "type" field');
                     }
                     entry.price = parseFloat(entry.price);
                 }
