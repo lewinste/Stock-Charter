@@ -2366,6 +2366,9 @@
             const S = 9; // triangle half-width in px
             const items = [];
 
+            // Build a set of dates that have a sell marker, so we can offset pattern triangles above them
+            const sellDates = new Set(activeMarkers.filter(m => m.event === 'sell').map(m => m.date));
+
             for (const m of patterns) {
                 const x = mainChart.timeScale().timeToCoordinate(m.date);
                 if (x === null || x === undefined) continue;
@@ -2374,8 +2377,9 @@
                 const highY = candleSeries.priceToCoordinate(candle.high);
                 if (highY === null || highY === undefined) continue;
 
-                // Downward-pointing triangle above the candle high
-                const tipY = highY - 6;
+                // If a sell marker is on the same candle, push the triangle above the sell arrow (~30px extra)
+                const extraOffset = sellDates.has(m.date) ? 30 : 0;
+                const tipY = highY - 6 - extraOffset;
                 const pts = `${x},${tipY} ${x - S},${tipY - S * 1.4} ${x + S},${tipY - S * 1.4}`;
                 const label = m.type || 'Pattern';
 
