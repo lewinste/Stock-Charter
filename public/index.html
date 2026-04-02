@@ -1173,6 +1173,11 @@
 
         const mainChart = LightweightCharts.createChart(mainEl, { ...chartOpts, autoSize: true });
 
+        // Overlay for custom SVG pattern markers
+        const patternOverlay = document.createElement('div');
+        patternOverlay.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:5;';
+        mainEl.appendChild(patternOverlay);
+
         const volumeChart = LightweightCharts.createChart(volEl, {
             ...paneOpts,
             autoSize: true,
@@ -2217,7 +2222,11 @@
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
+            renderPatternOverlay();
         });
+
+        // Re-render pattern overlay on scroll/zoom
+        mainChart.timeScale().subscribeVisibleTimeRangeChange(() => renderPatternOverlay());
 
         // ----- Double-click to scroll to most recent data -----
         function scrollToLatest() {
@@ -2345,6 +2354,45 @@
             markersBtnEl.classList.toggle('has-markers', n > 0);
         }
 
+        function renderPatternOverlay() {
+            const patterns = activeMarkers.filter(m => m.event === 'pattern');
+            if (patterns.length === 0) { patternOverlay.innerHTML = ''; return; }
+
+            const candleByTime = {};
+            currentCandles.forEach(c => { candleByTime[c.time] = c; });
+
+            const W = mainEl.clientWidth;
+            const H = mainEl.clientHeight;
+            const S = 9; // triangle half-width in px
+            const items = [];
+
+            for (const m of patterns) {
+                const x = mainChart.timeScale().timeToCoordinate(m.date);
+                if (x === null || x === undefined) continue;
+                const candle = candleByTime[m.date];
+                if (!candle) continue;
+                const highY = candleSeries.priceToCoordinate(candle.high);
+                if (highY === null || highY === undefined) continue;
+
+                // Downward-pointing triangle above the candle high
+                const tipY = highY - 6;
+                const pts = `${x},${tipY} ${x - S},${tipY - S * 1.4} ${x + S},${tipY - S * 1.4}`;
+                const label = m.type || 'Pattern';
+
+                items.push(`
+                    <polygon points="${pts}" fill="#D32F2F" stroke="#000000" stroke-width="1.5" stroke-linejoin="round"/>
+                    <text x="${x}" y="${tipY - S * 1.4 - 5}"
+                        text-anchor="middle" font-size="10"
+                        font-family="Inter,sans-serif" font-weight="600" fill="#D32F2F"
+                        paint-order="stroke" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"
+                    >${label}</text>
+                `);
+            }
+
+            patternOverlay.innerHTML =
+                `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0">${items.join('')}</svg>`;
+        }
+
         function applyMarkersToChart() {
             if (activeMarkers.length === 0) {
                 candleSeries.setMarkers([]);
@@ -2352,61 +2400,49 @@
                 markerOutlineSeries.setMarkers([]);
                 markerDotSeries.setData([]);
                 markerDotSeries.setMarkers([]);
+                patternOverlay.innerHTML = '';
                 updateMarkersCount();
                 return;
             }
 
             const BUY_COLOR = '#006B2D';
             const SELL_COLOR = '#B71C1C';
-            const PATTERN_COLOR = '#D32F2F';
 
-            // Arrow markers on the candle series (buy/sell + pattern)
+            // Arrow markers on candle series — buy/sell only
             const arrows = activeMarkers
-                .map(m => {
-                    if (m.event === 'pattern') {
-                        return {
-                            time: m.date,
-                            position: 'aboveBar',
-                            color: PATTERN_COLOR,
-                            shape: 'arrowDown',
-                            text: m.type || 'Pattern',
-                        };
-                    }
-                    return {
-                        time: m.date,
-                        position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
-                        color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
-                        shape: m.event === 'buy' ? 'arrowUp' : 'arrowDown',
-                        text: (m.event === 'buy' ? 'BUY' : 'SELL') + ' @ ' + m.price.toFixed(2),
-                    };
-                })
+                .filter(m => m.event !== 'pattern')
+                .map(m => ({
+                    time: m.date,
+                    position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
+                    color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
+                    shape: m.event === 'buy' ? 'arrowUp' : 'arrowDown',
+                    text: (m.event === 'buy' ? 'BUY' : 'SELL') + ' @ ' + m.price.toFixed(2),
+                }))
                 .sort((a, b) => a.time.localeCompare(b.time));
-
             candleSeries.setMarkers(arrows);
 
-            // Dot markers at exact prices for buy/sell; outline triangles for patterns
-            const sorted = [...activeMarkers].sort((a, b) => a.date.localeCompare(b.date));
-            const dotData = sorted.map(m => ({ time: m.date, value: m.price }));
+            // Dots at exact prices — buy/sell only
+            const buySell = [...activeMarkers]
+                .filter(m => m.event !== 'pattern')
+                .sort((a, b) => a.date.localeCompare(b.date));
+            const dotData = buySell.map(m => ({ time: m.date, value: m.price }));
 
-            // Outline series: black circles for buy/sell, black triangles for patterns
-            const outlineMarkers = sorted.map(m => {
-                if (m.event === 'pattern') {
-                    return { time: m.date, position: 'aboveBar', color: '#000000', shape: 'arrowDown', size: 1.2, text: '' };
-                }
-                return { time: m.date, position: 'inBar', color: '#000000', shape: 'circle', size: 0.8, text: '' };
-            });
+            const outlineMarkers = buySell.map(m => ({
+                time: m.date, position: 'inBar', color: '#000000', shape: 'circle', size: 0.8, text: '',
+            }));
             markerOutlineSeries.setData(dotData);
             markerOutlineSeries.setMarkers(outlineMarkers);
 
-            // Dot series: colored circles for buy/sell, red triangles for patterns
-            const dotMarkers = sorted.map(m => {
-                if (m.event === 'pattern') {
-                    return { time: m.date, position: 'aboveBar', color: PATTERN_COLOR, shape: 'arrowDown', size: 0.8, text: '' };
-                }
-                return { time: m.date, position: 'inBar', color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR, shape: 'circle', size: 0.5, text: '' };
-            });
+            const dotMarkers = buySell.map(m => ({
+                time: m.date, position: 'inBar',
+                color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
+                shape: 'circle', size: 0.5, text: '',
+            }));
             markerDotSeries.setData(dotData);
             markerDotSeries.setMarkers(dotMarkers);
+
+            // Pattern markers — real SVG triangles via overlay
+            renderPatternOverlay();
             updateMarkersCount();
         }
 
