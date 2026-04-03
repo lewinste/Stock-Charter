@@ -187,7 +187,7 @@ class handler(BaseHTTPRequestHandler):
         # Configurable indicator parameters
         ma_period = int(params.get("ma_period", [200])[0])
         rsi_period = int(params.get("rsi_period", [14])[0])
-        st_period = int(params.get("st_period", [10])[0])
+        st_period = int(params.get("st_period", [20])[0])
         st_mult = float(params.get("st_mult", [3.0])[0])
 
         if period not in PERIOD_DAYS:
