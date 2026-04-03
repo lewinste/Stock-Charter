@@ -168,6 +168,26 @@ def compute_supertrend(highs, lows, closes, period=10, multiplier=3.0):
     return supertrend, direction
 
 
+def compute_cmf(highs, lows, closes, volumes, period=20):
+    """Chaikin Money Flow: sum(MFV, n) / sum(Volume, n)"""
+    n = len(closes)
+    cmf = [None] * n
+    mfv = []
+    for i in range(n):
+        hl = highs[i] - lows[i]
+        if hl == 0:
+            mfv.append(0.0)
+        else:
+            mfv.append(((closes[i] - lows[i]) - (highs[i] - closes[i])) / hl * volumes[i])
+    for i in range(period - 1, n):
+        vol_sum = sum(volumes[i - period + 1: i + 1])
+        if vol_sum == 0:
+            cmf[i] = 0.0
+        else:
+            cmf[i] = round(sum(mfv[i - period + 1: i + 1]) / vol_sum, 4)
+    return cmf
+
+
 def compute_ma(values, period=50):
     """Compute SMA from a list."""
     ma = [None] * len(values)
@@ -189,6 +209,7 @@ class handler(BaseHTTPRequestHandler):
         rsi_period = int(params.get("rsi_period", [14])[0])
         st_period = int(params.get("st_period", [20])[0])
         st_mult = float(params.get("st_mult", [3.0])[0])
+        cmf_period = int(params.get("cmf_period", [20])[0])
 
         if period not in PERIOD_DAYS:
             period = "1y"
@@ -240,6 +261,7 @@ class handler(BaseHTTPRequestHandler):
         supertrend, st_dir = compute_supertrend(highs, lows, closes, st_period, st_mult)
         ma_vals = compute_ma(closes, ma_period)
         vol_ma14 = compute_ma(volumes, 14)
+        cmf_vals = compute_cmf(highs, lows, closes, volumes, cmf_period)
 
         # Build output arrays only for the requested window (trim_idx onwards)
         candles = []
@@ -248,6 +270,7 @@ class handler(BaseHTTPRequestHandler):
         rsi_data = []
         supertrend_data = []
         ma_data = []
+        cmf_data = []
 
         for i in range(trim_idx, len(all_rows)):
             r = all_rows[i]
@@ -275,6 +298,9 @@ class handler(BaseHTTPRequestHandler):
             if ma_vals[i] is not None:
                 ma_data.append({"time": t, "value": ma_vals[i]})
 
+            if cmf_vals[i] is not None:
+                cmf_data.append({"time": t, "value": cmf_vals[i]})
+
         self._send_json({
             "ticker": ticker,
             "name": meta.get("longName") or meta.get("shortName", ""),
@@ -285,6 +311,7 @@ class handler(BaseHTTPRequestHandler):
             "rsi": rsi_data,
             "supertrend": supertrend_data,
             "ma": ma_data,
+            "cmf": cmf_data,
         })
 
     def _send_json(self, data, status=200):

@@ -465,6 +465,11 @@
             border-top: 1px solid var(--border);
         }
 
+        #cmf-chart {
+            height: 110px;
+            border-top: 1px solid var(--border);
+        }
+
         /* Volume legend value (inline in ind-legend) */
         #volLegend:empty { display: none; }
 
@@ -985,6 +990,19 @@
                         <button class="ind-toggle on" data-ind="rsi" id="indToggleRsi"></button>
                     </div>
                 </div>
+                <div class="ind-dropdown-item" data-ind="cmf">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#00897b"></span>
+                        <span class="ind-dropdown-name">CMF</span>
+                        <span class="ind-dropdown-param" id="indParamCmf">(20)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="cmf" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="cmf" id="indToggleCmf"></button>
+                    </div>
+                </div>
                 <div id="customIndicatorsList"></div>
                 <div class="ind-dropdown-sep"></div>
                 <div style="position:relative">
@@ -1082,6 +1100,21 @@
             </div>
             <div id="rsi-chart"></div>
         </div>
+        <div id="cmf-chart-container" style="position:relative">
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="cmfLegendRow" data-ind="cmf">
+                    <span class="ind-name" id="cmfLegendName" style="color:#00897b">CMF (20)</span>
+                    <button class="ind-btn eye-btn" data-ind="cmf" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button class="ind-btn gear-btn" data-ind="cmf" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    </button>
+                    <span class="ind-val" id="cmfLegendVal" style="color:#00897b"></span>
+                </div>
+            </div>
+            <div id="cmf-chart"></div>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -1131,11 +1164,12 @@
         const state = {
             ticker: 'AAPL',
             period: '6mo',
-            indicators: { ma: true, supertrend: true, rsi: true },
+            indicators: { ma: true, supertrend: true, rsi: true, cmf: true },
             params: {
                 ma: { period: 200, color: '#2962ff', lineWidth: 1.5, lineStyle: 0 },
                 supertrend: { period: 20, multiplier: 3.0, lineWidth: 2, lineStyle: 0 },
                 rsi: { period: 14, color: '#7e57c2', lineWidth: 1.5, lineStyle: 0 },
+                cmf: { period: 20, color: '#00897b', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -1205,7 +1239,29 @@
             autoSize: true,
         });
 
-        // ----- Sync time scales across all 3 charts -----
+        const cmfEl = document.getElementById('cmf-chart');
+        const cmfChart = LightweightCharts.createChart(cmfEl, {
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#6b7280',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: '#f5f5f7' },
+                horzLines: { visible: false, color: 'transparent' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+                horzLine: { visible: false },
+            },
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70, scaleMargins: { top: 0.1, bottom: 0.1 } },
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
+            autoSize: true,
+        });
+
+        // ----- Sync time scales across all 4 charts -----
         let isSyncing = false;
         function syncRange(source, targets) {
             source.timeScale().subscribeVisibleLogicalRangeChange(range => {
@@ -1215,9 +1271,10 @@
                 isSyncing = false;
             });
         }
-        syncRange(mainChart, [volumeChart, rsiChart]);
-        syncRange(volumeChart, [mainChart, rsiChart]);
-        syncRange(rsiChart, [mainChart, volumeChart]);
+        syncRange(mainChart, [volumeChart, rsiChart, cmfChart]);
+        syncRange(volumeChart, [mainChart, rsiChart, cmfChart]);
+        syncRange(rsiChart, [mainChart, volumeChart, cmfChart]);
+        syncRange(cmfChart, [mainChart, volumeChart, rsiChart]);
 
         // ----- Series on main chart (candles + indicators only) -----
         const candleSeries = mainChart.addCandlestickSeries({
@@ -1290,12 +1347,25 @@
         rsiSeries.createPriceLine({ price: 70, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
         rsiSeries.createPriceLine({ price: 30, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
 
+        // ----- Series on CMF chart -----
+        const cmfSeries = cmfChart.addLineSeries({
+            color: '#00897b', lineWidth: 1.5,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            baseLineVisible: false,
+        });
+
+        // CMF zero line
+        cmfSeries.createPriceLine({ price: 0, color: 'rgba(0,137,123,0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
         // Store candle data for crosshair legend
         let currentCandles = [];
         let currentVolume = [];
         let volumeByTime = {};
         let volMaByTime = {};
         let rsiByTime = {};
+        let cmfByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1356,6 +1426,7 @@
         const maLegendVal = document.getElementById('maLegendVal');
         const stLegendVal = document.getElementById('stLegendVal');
         const rsiLegendVal = document.getElementById('rsiLegendVal');
+        const cmfLegendVal = document.getElementById('cmfLegendVal');
 
         function updateIndLegendValues(param) {
             if (param && param.seriesData) {
@@ -1370,8 +1441,13 @@
         function updateRsiLegendValue(param) {
             if (param && param.seriesData) {
                 const rsiData = param.seriesData.get(rsiSeries);
-                rsiLegendVal.textContent = rsiData ? rsiData.value.toFixed(2) : '';
+                rsiLegendVal.textContent = rsiData ? rsiData.value.toFixed(4) : '';
             }
+        }
+
+        function updateCmfLegendValue(time) {
+            const cmf = cmfByTime[time];
+            cmfLegendVal.textContent = cmf != null ? cmf.toFixed(4) : '';
         }
 
         function showLastIndValues() {
@@ -1379,6 +1455,7 @@
             maLegendVal.textContent = '';
             stLegendVal.textContent = '';
             rsiLegendVal.textContent = '';
+            cmfLegendVal.textContent = '';
             if (typeof updateCustomIndLegendValues === 'function') updateCustomIndLegendValues(null);
         }
 
@@ -1403,6 +1480,7 @@
             syncCrosshairFromSource(volumeChart, param, [
                 { chart: mainChart, series: candleSeries },
                 { chart: rsiChart, series: rsiSeries },
+                { chart: cmfChart, series: cmfSeries },
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(volumeSeries)) {
                 if (currentVolume.length > 0) {
@@ -1410,12 +1488,14 @@
                     updateVolLegend(lastV.value, lastV.time);
                 }
                 rsiLegendVal.textContent = '';
+                cmfLegendVal.textContent = '';
                 return;
             }
             const bar = param.seriesData.get(volumeSeries);
             if (bar) updateVolLegend(bar.value, param.time);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+            updateCmfLegendValue(param.time);
         });
 
         // RSI crosshair hover
@@ -1423,16 +1503,42 @@
             syncCrosshairFromSource(rsiChart, param, [
                 { chart: mainChart, series: candleSeries },
                 { chart: volumeChart, series: volumeSeries },
+                { chart: cmfChart, series: cmfSeries },
             ]);
             updateRsiLegendValue(param);
             if (param.time) {
                 const vol = volumeByTime[param.time];
                 if (vol != null) updateVolLegend(vol, param.time);
+                updateCmfLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
                     updateVolLegend(lastV.value, lastV.time);
                 }
+                cmfLegendVal.textContent = '';
+            }
+        });
+
+        // CMF crosshair hover
+        cmfChart.subscribeCrosshairMove(param => {
+            syncCrosshairFromSource(cmfChart, param, [
+                { chart: mainChart, series: candleSeries },
+                { chart: volumeChart, series: volumeSeries },
+                { chart: rsiChart, series: rsiSeries },
+            ]);
+            if (param.time) {
+                const vol = volumeByTime[param.time];
+                if (vol != null) updateVolLegend(vol, param.time);
+                const rsi = rsiByTime[param.time];
+                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+                updateCmfLegendValue(param.time);
+            } else {
+                if (currentVolume.length > 0) {
+                    const lastV = currentVolume[currentVolume.length - 1];
+                    updateVolLegend(lastV.value, lastV.time);
+                }
+                rsiLegendVal.textContent = '';
+                cmfLegendVal.textContent = '';
             }
         });
 
@@ -1441,6 +1547,7 @@
             syncCrosshairFromSource(mainChart, param, [
                 { chart: volumeChart, series: volumeSeries },
                 { chart: rsiChart, series: rsiSeries },
+                { chart: cmfChart, series: cmfSeries },
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(candleSeries)) {
                 if (currentCandles.length > 0) {
@@ -1461,6 +1568,7 @@
             updateCustomIndLegendValues(param);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+            updateCmfLegendValue(param.time);
         });
 
         // ----- Ticker header update -----
@@ -1512,6 +1620,8 @@
             if (data.vol_ma14) data.vol_ma14.forEach(v => { volMaByTime[v.time] = v.value; });
             rsiByTime = {};
             data.rsi.forEach(r => { rsiByTime[r.time] = r.value; });
+            cmfByTime = {};
+            if (data.cmf) data.cmf.forEach(c => { cmfByTime[c.time] = c.value; });
 
             candleSeries.setData(data.candles);
             maSeries.setData(data.ma);
@@ -1521,6 +1631,7 @@
             volMaSeries.setData(data.vol_ma14 || []);
 
             rsiSeries.setData(data.rsi);
+            cmfSeries.setData(data.cmf || []);
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
@@ -1562,7 +1673,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&ma_period=${p.ma.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&ma_period=${p.ma.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -1624,12 +1735,15 @@
             supertrendSeries.applyOptions({ visible: state.indicators.supertrend });
 
             const rsiVisible = state.indicators.rsi;
-            const rsiContainer = document.getElementById('rsi-chart-container');
-            rsiContainer.style.display = rsiVisible ? 'block' : 'none';
+            document.getElementById('rsi-chart-container').style.display = rsiVisible ? 'block' : 'none';
+
+            const cmfVisible = state.indicators.cmf;
+            document.getElementById('cmf-chart-container').style.display = cmfVisible ? 'block' : 'none';
 
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             if (rsiVisible) rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
+            if (cmfVisible) cmfChart.resize(cmfEl.clientWidth, cmfEl.clientHeight);
         }
 
         // ----- UI helpers -----
@@ -1726,6 +1840,10 @@
                 title: 'RSI Settings',
                 fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 100 }, ...styleFields],
             },
+            cmf: {
+                title: 'CMF Settings',
+                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 100 }, ...styleFields],
+            },
         };
 
         function renderSettingsField(f, val) {
@@ -1779,6 +1897,10 @@
             rsiName.textContent = `RSI (${p.rsi.period})`;
             rsiName.style.color = p.rsi.color;
             document.getElementById('rsiLegendVal').style.color = p.rsi.color;
+            const cmfName = document.getElementById('cmfLegendName');
+            cmfName.textContent = `CMF (${p.cmf.period})`;
+            cmfName.style.color = p.cmf.color;
+            document.getElementById('cmfLegendVal').style.color = p.cmf.color;
         }
 
         document.querySelectorAll('.gear-btn').forEach(btn => {
@@ -1814,6 +1936,8 @@
             supertrendSeries.applyOptions({ lineWidth: sp.lineWidth, lineStyle: sp.lineStyle });
             const rp = state.params.rsi;
             rsiSeries.applyOptions({ color: rp.color, lineWidth: rp.lineWidth, lineStyle: rp.lineStyle });
+            const cp = state.params.cmf;
+            cmfSeries.applyOptions({ color: cp.color, lineWidth: cp.lineWidth, lineStyle: cp.lineStyle });
         }
 
         document.getElementById('settingsApply').addEventListener('click', () => {
@@ -1846,7 +1970,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma: 'indToggleMa', supertrend: 'indToggleSt', rsi: 'indToggleRsi' };
+            const map = { ma: 'indToggleMa', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -1858,6 +1982,7 @@
             document.getElementById('indParamMa').textContent = `(${p.ma.period})`;
             document.getElementById('indParamSt').textContent = `(${p.supertrend.period}, ${p.supertrend.multiplier})`;
             document.getElementById('indParamRsi').textContent = `(${p.rsi.period})`;
+            document.getElementById('indParamCmf').textContent = `(${p.cmf.period})`;
         }
 
         // Toggle switches in indicators dropdown
@@ -2222,6 +2347,7 @@
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
+            cmfChart.resize(cmfEl.clientWidth, cmfEl.clientHeight);
             renderPatternOverlay();
         });
 
