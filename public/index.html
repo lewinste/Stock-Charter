@@ -2520,7 +2520,7 @@
 
                 // currentY = bottom of next marker to draw (moves upward as we stack)
                 let currentY = highY - 6;
-                if (sellDates.has(date)) currentY -= 30; // clear the sell arrowDown
+                if (sellDates.has(date)) currentY -= 46; // clear the sell arrowDown + its text
 
                 for (const m of group) {
                     if (m.event === 'pattern') {
