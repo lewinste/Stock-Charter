@@ -2482,19 +2482,30 @@
 
         function renderPatternOverlay() {
             const patterns = activeMarkers.filter(m => m.event === 'pattern');
-            if (patterns.length === 0) { patternOverlay.innerHTML = ''; return; }
+            const states = activeMarkers.filter(m => m.event === 'state');
+            if (patterns.length === 0 && states.length === 0) { patternOverlay.innerHTML = ''; return; }
 
             const candleByTime = {};
             currentCandles.forEach(c => { candleByTime[c.time] = c; });
 
             const W = mainEl.clientWidth;
             const H = mainEl.clientHeight;
-            const S = 9; // triangle half-width in px
+            const S = 9;   // triangle half-width
+            const SQ = 12; // state square side
             const items = [];
 
-            // Build a set of dates that have a sell marker, so we can offset pattern triangles above them
-            const sellDates = new Set(activeMarkers.filter(m => m.event === 'sell').map(m => m.date));
+            const sellDates    = new Set(activeMarkers.filter(m => m.event === 'sell').map(m => m.date));
+            const patternDates = new Set(patterns.map(m => m.date));
 
+            const STATE_COLORS = {
+                IDLE:        '#9e9e9e',
+                ARMED:       '#fdd835',
+                LONG:        '#1565c0',
+                WATCH_RED:   '#D32F2F',
+                WATCH_GREEN: '#2e7d32',
+            };
+
+            // Pattern triangles
             for (const m of patterns) {
                 const x = mainChart.timeScale().timeToCoordinate(m.date);
                 if (x === null || x === undefined) continue;
@@ -2503,7 +2514,6 @@
                 const highY = candleSeries.priceToCoordinate(candle.high);
                 if (highY === null || highY === undefined) continue;
 
-                // If a sell marker is on the same candle, push the triangle above the sell arrow (~30px extra)
                 const extraOffset = sellDates.has(m.date) ? 30 : 0;
                 const tipY = highY - 6 - extraOffset;
                 const pts = `${x},${tipY} ${x - S},${tipY - S * 1.4} ${x + S},${tipY - S * 1.4}`;
@@ -2514,6 +2524,37 @@
                     <text x="${x}" y="${tipY - S * 1.4 - 5}"
                         text-anchor="middle" font-size="10"
                         font-family="Inter,sans-serif" font-weight="600" fill="#D32F2F"
+                        paint-order="stroke" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"
+                    >${label}</text>
+                `);
+            }
+
+            // State squares
+            for (const m of states) {
+                const x = mainChart.timeScale().timeToCoordinate(m.date);
+                if (x === null || x === undefined) continue;
+                const candle = candleByTime[m.date];
+                if (!candle) continue;
+                const highY = candleSeries.priceToCoordinate(candle.high);
+                if (highY === null || highY === undefined) continue;
+
+                // Stack above sell arrow (+30px) and/or pattern triangle (+35px)
+                let extraOffset = 0;
+                if (sellDates.has(m.date))    extraOffset += 30;
+                if (patternDates.has(m.date)) extraOffset += 35;
+
+                const squareBottom = highY - 6 - extraOffset;
+                const squareTop    = squareBottom - SQ;
+                const squareLeft   = x - SQ / 2;
+                const fillColor    = STATE_COLORS[m.type] || '#9e9e9e';
+                const label        = m.type || 'STATE';
+
+                items.push(`
+                    <rect x="${squareLeft}" y="${squareTop}" width="${SQ}" height="${SQ}"
+                        fill="${fillColor}" stroke="#000000" stroke-width="1.5"/>
+                    <text x="${x}" y="${squareTop - 4}"
+                        text-anchor="middle" font-size="10"
+                        font-family="Inter,sans-serif" font-weight="600" fill="${fillColor}"
                         paint-order="stroke" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round"
                     >${label}</text>
                 `);
@@ -2540,7 +2581,7 @@
 
             // Arrow markers on candle series — buy/sell only
             const arrows = activeMarkers
-                .filter(m => m.event !== 'pattern')
+                .filter(m => m.event === 'buy' || m.event === 'sell')
                 .map(m => ({
                     time: m.date,
                     position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
@@ -2553,7 +2594,7 @@
 
             // Dots at exact prices — buy/sell only
             const buySell = [...activeMarkers]
-                .filter(m => m.event !== 'pattern')
+                .filter(m => m.event === 'buy' || m.event === 'sell')
                 .sort((a, b) => a.date.localeCompare(b.date));
             const dotData = buySell.map(m => ({ time: m.date, value: m.price }));
 
@@ -2597,11 +2638,14 @@
                     if (!entry.date || entry.price == null || !entry.event) {
                         throw new Error('Each entry needs date, price, event');
                     }
-                    if (entry.event !== 'buy' && entry.event !== 'sell' && entry.event !== 'pattern') {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", or "pattern"`);
+                    if (!['buy', 'sell', 'pattern', 'state'].includes(entry.event)) {
+                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", or "state"`);
                     }
                     if (entry.event === 'pattern' && !entry.type) {
                         throw new Error('Pattern events require a "type" field');
+                    }
+                    if (entry.event === 'state' && !entry.type) {
+                        throw new Error('State events require a "type" field (IDLE, ARMED, LONG, WATCH_RED, WATCH_GREEN)');
                     }
                     entry.price = parseFloat(entry.price);
                 }
