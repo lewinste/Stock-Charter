@@ -188,6 +188,21 @@ def compute_cmf(highs, lows, closes, volumes, period=20):
     return cmf
 
 
+def compute_ema_from_values(values, period=3):
+    """Compute EMA of a list that may contain Nones."""
+    n = len(values)
+    result = [None] * n
+    k = 2 / (period + 1)
+    ema = None
+    for i in range(n):
+        v = values[i]
+        if v is None:
+            continue
+        ema = v if ema is None else v * k + ema * (1 - k)
+        result[i] = round(ema, 4)
+    return result
+
+
 def compute_ma(values, period=50):
     """Compute SMA from a list."""
     ma = [None] * len(values)
@@ -262,6 +277,7 @@ class handler(BaseHTTPRequestHandler):
         ma_vals = compute_ma(closes, ma_period)
         vol_ma14 = compute_ma(volumes, 14)
         cmf_vals = compute_cmf(highs, lows, closes, volumes, cmf_period)
+        cmf_signal = compute_ema_from_values(cmf_vals, 3)
 
         # Build output arrays only for the requested window (trim_idx onwards)
         candles = []
@@ -271,6 +287,7 @@ class handler(BaseHTTPRequestHandler):
         supertrend_data = []
         ma_data = []
         cmf_data = []
+        cmf_signal_data = []
 
         for i in range(trim_idx, len(all_rows)):
             r = all_rows[i]
@@ -301,6 +318,9 @@ class handler(BaseHTTPRequestHandler):
             if cmf_vals[i] is not None:
                 cmf_data.append({"time": t, "value": cmf_vals[i]})
 
+            if cmf_signal[i] is not None:
+                cmf_signal_data.append({"time": t, "value": cmf_signal[i]})
+
         self._send_json({
             "ticker": ticker,
             "name": meta.get("longName") or meta.get("shortName", ""),
@@ -312,6 +332,7 @@ class handler(BaseHTTPRequestHandler):
             "supertrend": supertrend_data,
             "ma": ma_data,
             "cmf": cmf_data,
+            "cmf_signal": cmf_signal_data,
         })
 
     def _send_json(self, data, status=200):

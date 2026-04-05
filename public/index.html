@@ -1154,6 +1154,8 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                     </button>
                     <span class="ind-val" id="cmfLegendVal" style="color:#00897b"></span>
+                    <span class="ind-name" style="color:#ff6d00;margin-left:6px">Sig</span>
+                    <span class="ind-val" id="cmfSignalLegendVal" style="color:#ff6d00"></span>
                 </div>
             </div>
             <div id="cmf-chart"></div>
@@ -1407,6 +1409,12 @@
             baseLineVisible: false,
         });
 
+        const cmfSignalSeries = cmfChart.addLineSeries({
+            color: '#ff6d00', lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+
         // CMF zero line
         cmfSeries.createPriceLine({ price: 0, color: 'rgba(0,137,123,0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
 
@@ -1417,6 +1425,7 @@
         let volMaByTime = {};
         let rsiByTime = {};
         let cmfByTime = {};
+        let cmfSignalByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1504,7 +1513,10 @@
 
         function updateCmfLegendValue(time) {
             const cmf = cmfByTime[time];
+            const sig = cmfSignalByTime[time];
             cmfLegendVal.textContent = cmf != null ? cmf.toFixed(4) : '';
+            const sigEl = document.getElementById('cmfSignalLegendVal');
+            if (sigEl) sigEl.textContent = sig != null ? sig.toFixed(4) : '';
         }
 
         function showLastIndValues() {
@@ -1515,6 +1527,8 @@
             stLegendVal.textContent = '';
             rsiLegendVal.textContent = '';
             cmfLegendVal.textContent = '';
+            const sigEl = document.getElementById('cmfSignalLegendVal');
+            if (sigEl) sigEl.textContent = '';
             if (typeof updateCustomIndLegendValues === 'function') updateCustomIndLegendValues(null);
         }
 
@@ -1681,6 +1695,8 @@
             data.rsi.forEach(r => { rsiByTime[r.time] = r.value; });
             cmfByTime = {};
             if (data.cmf) data.cmf.forEach(c => { cmfByTime[c.time] = c.value; });
+            cmfSignalByTime = {};
+            if (data.cmf_signal) data.cmf_signal.forEach(c => { cmfSignalByTime[c.time] = c.value; });
 
             candleSeries.setData(data.candles);
             recomputeBuiltInMAs();
@@ -1691,6 +1707,7 @@
 
             rsiSeries.setData(data.rsi);
             cmfSeries.setData(data.cmf || []);
+            cmfSignalSeries.setData(data.cmf_signal || []);
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
