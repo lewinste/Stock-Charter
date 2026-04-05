@@ -915,7 +915,7 @@
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
             </svg>
-            <input class="ticker-input" id="tickerInput" value="AAPL" spellcheck="false"
+            <input class="ticker-input" id="tickerInput" value="SPY" spellcheck="false"
                    maxlength="10" placeholder="Search ticker...">
         </div>
 
@@ -950,17 +950,40 @@
                 Indicators
             </button>
             <div class="indicators-dropdown" id="indicatorsDropdown">
-                <div class="ind-dropdown-item" data-ind="ma">
+                <div class="ind-dropdown-item" data-ind="ma20">
                     <div class="ind-dropdown-left">
-                        <span class="ind-dropdown-swatch" style="background:#2962ff"></span>
-                        <span class="ind-dropdown-name">Moving Average</span>
-                        <span class="ind-dropdown-param" id="indParamMa">(200)</span>
+                        <span class="ind-dropdown-swatch" style="background:#00bcd4"></span>
+                        <span class="ind-dropdown-name">MA 20</span>
                     </div>
                     <div class="ind-dropdown-right">
-                        <button class="ind-gear-btn" data-ind="ma" title="Settings">
+                        <button class="ind-gear-btn" data-ind="ma20" title="Settings">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                         </button>
-                        <button class="ind-toggle on" data-ind="ma" id="indToggleMa"></button>
+                        <button class="ind-toggle on" data-ind="ma20" id="indToggleMa20"></button>
+                    </div>
+                </div>
+                <div class="ind-dropdown-item" data-ind="ma50">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#ff9800"></span>
+                        <span class="ind-dropdown-name">MA 50</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="ma50" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="ma50" id="indToggleMa50"></button>
+                    </div>
+                </div>
+                <div class="ind-dropdown-item" data-ind="ma200">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#f44336"></span>
+                        <span class="ind-dropdown-name">MA 200</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="ma200" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="ma200" id="indToggleMa200"></button>
                     </div>
                 </div>
                 <div class="ind-dropdown-item" data-ind="supertrend">
@@ -1052,15 +1075,35 @@
         <div class="ohlc-legend" id="ohlcLegend"></div>
         <!-- Indicator legends on main chart -->
         <div class="ind-legend" id="mainIndLegend" style="top:32px">
-            <div class="ind-legend-row" id="maLegendRow" data-ind="ma">
-                <span class="ind-name" id="maLegendName" style="color:var(--accent)">MA (200, close)</span>
-                <button class="ind-btn eye-btn" data-ind="ma" title="Toggle visibility">
+            <div class="ind-legend-row" id="ma20LegendRow" data-ind="ma20">
+                <span class="ind-name" id="ma20LegendName" style="color:#00bcd4">MA (20)</span>
+                <button class="ind-btn eye-btn" data-ind="ma20" title="Toggle visibility">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 </button>
-                <button class="ind-btn gear-btn" data-ind="ma" title="Settings">
+                <button class="ind-btn gear-btn" data-ind="ma20" title="Settings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                 </button>
-                <span class="ind-val" id="maLegendVal" style="color:var(--accent)"></span>
+                <span class="ind-val" id="ma20LegendVal" style="color:#00bcd4"></span>
+            </div>
+            <div class="ind-legend-row" id="ma50LegendRow" data-ind="ma50">
+                <span class="ind-name" id="ma50LegendName" style="color:#ff9800">MA (50)</span>
+                <button class="ind-btn eye-btn" data-ind="ma50" title="Toggle visibility">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="ind-btn gear-btn" data-ind="ma50" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </button>
+                <span class="ind-val" id="ma50LegendVal" style="color:#ff9800"></span>
+            </div>
+            <div class="ind-legend-row" id="ma200LegendRow" data-ind="ma200">
+                <span class="ind-name" id="ma200LegendName" style="color:#f44336">MA (200)</span>
+                <button class="ind-btn eye-btn" data-ind="ma200" title="Toggle visibility">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                </button>
+                <button class="ind-btn gear-btn" data-ind="ma200" title="Settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                </button>
+                <span class="ind-val" id="ma200LegendVal" style="color:#f44336"></span>
             </div>
             <div class="ind-legend-row" id="stLegendRow" data-ind="supertrend">
                 <span class="ind-name" id="stLegendName" style="color:var(--green)">SuperTrend (20, 3)</span>
@@ -1162,11 +1205,13 @@
     <script>
         // ----- State -----
         const state = {
-            ticker: 'AAPL',
+            ticker: 'SPY',
             period: '6mo',
-            indicators: { ma: true, supertrend: true, rsi: true, cmf: true },
+            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true },
             params: {
-                ma: { period: 200, color: '#2962ff', lineWidth: 1.5, lineStyle: 0 },
+                ma20:  { period: 20,  color: '#00bcd4', lineWidth: 1,   lineStyle: 0 },
+                ma50:  { period: 50,  color: '#ff9800', lineWidth: 2,   lineStyle: 0 },
+                ma200: { period: 200, color: '#f44336', lineWidth: 3,   lineStyle: 0 },
                 supertrend: { period: 20, multiplier: 3.0, lineWidth: 2, lineStyle: 0 },
                 rsi: { period: 14, color: '#7e57c2', lineWidth: 1.5, lineStyle: 0 },
                 cmf: { period: 20, color: '#00897b', lineWidth: 1.5, lineStyle: 0 },
@@ -1305,11 +1350,17 @@
             priceScaleId: 'right',
         });
 
-        const maSeries = mainChart.addLineSeries({
-            color: '#2962ff', lineWidth: 1.5,
-            priceLineVisible: false,
-            lastValueVisible: false,
-            crosshairMarkerVisible: false,
+        const ma20Series = mainChart.addLineSeries({
+            color: '#00bcd4', lineWidth: 1,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        const ma50Series = mainChart.addLineSeries({
+            color: '#ff9800', lineWidth: 2,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        const ma200Series = mainChart.addLineSeries({
+            color: '#f44336', lineWidth: 3,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
         });
 
         const supertrendSeries = mainChart.addLineSeries({
@@ -1423,15 +1474,21 @@
         }
 
         // ----- Indicator legend value updates -----
-        const maLegendVal = document.getElementById('maLegendVal');
+        const ma20LegendVal = document.getElementById('ma20LegendVal');
+        const ma50LegendVal = document.getElementById('ma50LegendVal');
+        const ma200LegendVal = document.getElementById('ma200LegendVal');
         const stLegendVal = document.getElementById('stLegendVal');
         const rsiLegendVal = document.getElementById('rsiLegendVal');
         const cmfLegendVal = document.getElementById('cmfLegendVal');
 
         function updateIndLegendValues(param) {
             if (param && param.seriesData) {
-                const maData = param.seriesData.get(maSeries);
-                maLegendVal.textContent = maData ? maData.value.toFixed(2) : '';
+                const d20 = param.seriesData.get(ma20Series);
+                ma20LegendVal.textContent = d20 ? d20.value.toFixed(2) : '';
+                const d50 = param.seriesData.get(ma50Series);
+                ma50LegendVal.textContent = d50 ? d50.value.toFixed(2) : '';
+                const d200 = param.seriesData.get(ma200Series);
+                ma200LegendVal.textContent = d200 ? d200.value.toFixed(2) : '';
 
                 const stData = param.seriesData.get(supertrendSeries);
                 stLegendVal.textContent = stData ? stData.value.toFixed(2) : '';
@@ -1452,7 +1509,9 @@
 
         function showLastIndValues() {
             // Show last known values when crosshair leaves
-            maLegendVal.textContent = '';
+            ma20LegendVal.textContent = '';
+            ma50LegendVal.textContent = '';
+            ma200LegendVal.textContent = '';
             stLegendVal.textContent = '';
             rsiLegendVal.textContent = '';
             cmfLegendVal.textContent = '';
@@ -1624,7 +1683,7 @@
             if (data.cmf) data.cmf.forEach(c => { cmfByTime[c.time] = c.value; });
 
             candleSeries.setData(data.candles);
-            maSeries.setData(data.ma);
+            recomputeBuiltInMAs();
             supertrendSeries.setData(data.supertrend);
 
             volumeSeries.setData(data.volume);
@@ -1673,7 +1732,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&ma_period=${p.ma.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -1697,7 +1756,7 @@
             try {
                 const p = state.params;
                 const res = await fetch(
-                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&ma_period=${p.ma.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}`
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}`
                 );
                 if (!res.ok) return;
                 const data = await res.json();
@@ -1731,7 +1790,9 @@
         });
 
         function applyVisibility() {
-            maSeries.applyOptions({ visible: state.indicators.ma });
+            ma20Series.applyOptions({ visible: state.indicators.ma20 });
+            ma50Series.applyOptions({ visible: state.indicators.ma50 });
+            ma200Series.applyOptions({ visible: state.indicators.ma200 });
             supertrendSeries.applyOptions({ visible: state.indicators.supertrend });
 
             const rsiVisible = state.indicators.rsi;
@@ -1823,10 +1884,9 @@
         ];
 
         const settingsConfig = {
-            ma: {
-                title: 'MA Settings',
-                fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 500 }, ...styleFields],
-            },
+            ma20:  { title: 'MA 20 Style',  fields: [...styleFields] },
+            ma50:  { title: 'MA 50 Style',  fields: [...styleFields] },
+            ma200: { title: 'MA 200 Style', fields: [...styleFields] },
             supertrend: {
                 title: 'SuperTrend Settings',
                 fields: [
@@ -1888,10 +1948,16 @@
 
         function updateLegendNames() {
             const p = state.params;
-            const maName = document.getElementById('maLegendName');
-            maName.textContent = `MA (${p.ma.period}, close)`;
-            maName.style.color = p.ma.color;
-            document.getElementById('maLegendVal').style.color = p.ma.color;
+            for (const [key, period] of [['ma20', 20], ['ma50', 50], ['ma200', 200]]) {
+                const nameEl = document.getElementById(`${key}LegendName`);
+                const valEl  = document.getElementById(`${key}LegendVal`);
+                nameEl.textContent = `MA (${period})`;
+                nameEl.style.color = p[key].color;
+                valEl.style.color  = p[key].color;
+                // keep dropdown swatch in sync
+                const swatch = document.querySelector(`.ind-dropdown-item[data-ind="${key}"] .ind-dropdown-swatch`);
+                if (swatch) swatch.style.background = p[key].color;
+            }
             document.getElementById('stLegendName').textContent = `SuperTrend (${p.supertrend.period}, ${p.supertrend.multiplier})`;
             const rsiName = document.getElementById('rsiLegendName');
             rsiName.textContent = `RSI (${p.rsi.period})`;
@@ -1930,8 +1996,9 @@
         }
 
         function applyBuiltInStyles() {
-            const mp = state.params.ma;
-            maSeries.applyOptions({ color: mp.color, lineWidth: mp.lineWidth, lineStyle: mp.lineStyle });
+            ma20Series.applyOptions({ color: state.params.ma20.color, lineWidth: state.params.ma20.lineWidth, lineStyle: state.params.ma20.lineStyle });
+            ma50Series.applyOptions({ color: state.params.ma50.color, lineWidth: state.params.ma50.lineWidth, lineStyle: state.params.ma50.lineStyle });
+            ma200Series.applyOptions({ color: state.params.ma200.color, lineWidth: state.params.ma200.lineWidth, lineStyle: state.params.ma200.lineStyle });
             const sp = state.params.supertrend;
             supertrendSeries.applyOptions({ lineWidth: sp.lineWidth, lineStyle: sp.lineStyle });
             const rp = state.params.rsi;
@@ -1946,7 +2013,8 @@
             updateLegendNames();
             applyBuiltInStyles();
             closeSettings();
-            loadChart();
+            // MA style changes don't require a server fetch
+            if (!['ma20', 'ma50', 'ma200'].includes(currentSettingsInd)) loadChart();
         });
 
         // Apply on Enter key in settings input
@@ -1970,7 +2038,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma: 'indToggleMa', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf' };
+            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -1979,7 +2047,6 @@
 
         function updateIndicatorParams() {
             const p = state.params;
-            document.getElementById('indParamMa').textContent = `(${p.ma.period})`;
             document.getElementById('indParamSt').textContent = `(${p.supertrend.period}, ${p.supertrend.multiplier})`;
             document.getElementById('indParamRsi').textContent = `(${p.rsi.period})`;
             document.getElementById('indParamCmf').textContent = `(${p.cmf.period})`;
@@ -2067,6 +2134,12 @@
                 data.push({ time: candles[i].time, value: Math.round((sum / period) * 100) / 100 });
             }
             return data;
+        }
+
+        function recomputeBuiltInMAs() {
+            ma20Series.setData(computeSMA(currentCandles, state.params.ma20.period));
+            ma50Series.setData(computeSMA(currentCandles, state.params.ma50.period));
+            ma200Series.setData(computeSMA(currentCandles, state.params.ma200.period));
         }
 
         function computeBB(candles, period, stddev) {
