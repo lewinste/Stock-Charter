@@ -1403,9 +1403,22 @@
             baseLineVisible: false,
         });
 
-        // RSI overbought/oversold dashed reference lines
+        // RSI reference lines
         rsiSeries.createPriceLine({ price: 70, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        rsiSeries.createPriceLine({ price: 45, color: 'rgba(180,180,180,0.5)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
         rsiSeries.createPriceLine({ price: 30, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
+        // RSI 30-70 band background
+        const rsiBandSeries = rsiChart.addHistogramSeries({
+            priceScaleId: 'right',
+            priceLineVisible: false,
+            lastValueVisible: false,
+            color: 'rgba(126,87,194,0.07)',
+        });
+        // Fill the 30–70 band by setting constant value=70 with base=30
+        rsiBandSeries.applyOptions({ base: 30 });
+        // Will be populated after RSI data loads, in applyChartData
+        let rsiBandData = [];
 
         // ----- Series on CMF chart -----
         const cmfSeries = cmfChart.addLineSeries({
@@ -1713,6 +1726,7 @@
             volMaSeries.setData(data.vol_ma14 || []);
 
             rsiSeries.setData(data.rsi);
+            rsiBandSeries.setData(data.rsi.map(d => ({ time: d.time, value: 70 })));
             cmfSeries.setData(data.cmf || []);
             cmfSignalSeries.setData(data.cmf_signal || []);
 
