@@ -1182,13 +1182,14 @@
         <div class="markers-dialog">
             <h3>Add Buy/Sell Markers</h3>
             <p class="hint">
-                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"}</code><br>
-                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For <code>lowest_day</code>, price is ignored (uses candle close).
+                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"|"squeeze"}</code><br>
+                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For <code>lowest_day</code>/<code>squeeze</code>, price is ignored.
             </p>
             <textarea class="markers-textarea" id="markersTextarea" placeholder='[
   {"date": "2025-01-15", "price": 150.25, "event": "buy"},
   {"date": "2025-06-10", "price": 185.50, "event": "sell"},
-  {"date": "2025-03-22", "price": 0, "event": "lowest_day"}
+  {"date": "2025-03-22", "price": 0, "event": "lowest_day"},
+  {"date": "2025-04-05", "price": 0, "event": "squeeze"}
 ]' spellcheck="false"></textarea>
             <div class="markers-actions">
                 <div class="left-actions">
@@ -2609,7 +2610,7 @@
         }
 
         function renderPatternOverlay() {
-            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state');
+            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze');
             if (svgMarkers.length === 0) { patternOverlay.innerHTML = ''; return; }
 
             const candleByTime = {};
@@ -2683,6 +2684,21 @@
                         `);
                         // Advance: square height + text (10px) + gap (4px) + 4px baseline pad
                         currentY = squareTop - 4 - 10 - 5;
+                    } else if (m.event === 'squeeze') {
+                        // Two horizontal bars forming an "=" sign
+                        const EW = 10; // half-width of each bar
+                        const EH = 2;  // bar thickness
+                        const GAP = 3; // gap between bars
+                        const bar2Top = currentY - EH;
+                        const bar1Top = bar2Top - GAP - EH;
+                        items.push(`
+                            <rect x="${x - EW}" y="${bar1Top}" width="${EW * 2}" height="${EH}"
+                                fill="#FF6D00" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
+                            <rect x="${x - EW}" y="${bar2Top}" width="${EW * 2}" height="${EH}"
+                                fill="#FF6D00" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
+                        `);
+                        // Advance: total height of "=" + gap
+                        currentY = bar1Top - 5;
                     }
                 }
             }
@@ -2796,8 +2812,8 @@
                     if (!entry.date || entry.price == null || !entry.event) {
                         throw new Error('Each entry needs date, price, event');
                     }
-                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day'].includes(entry.event)) {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", or "lowest_day"`);
+                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze'].includes(entry.event)) {
+                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", "lowest_day", or "squeeze"`);
                     }
                     if (entry.event === 'pattern' && !entry.type) {
                         throw new Error('Pattern events require a "type" field');
