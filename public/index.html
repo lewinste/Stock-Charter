@@ -694,7 +694,7 @@
         .candle-ctx-overlay.visible { display: block; }
         .candle-ctx-popup {
             position: absolute;
-            background: var(--bg-card);
+            background: #ffffff;
             border: 1px solid var(--border);
             border-radius: 10px;
             padding: 14px 16px;
@@ -728,7 +728,7 @@
             resize: vertical;
             border: 1px solid var(--border);
             border-radius: 6px;
-            background: var(--bg-main);
+            background: #f6f8fa;
             color: var(--text-primary);
             font-family: 'JetBrains Mono', monospace;
             font-size: 11px;
@@ -744,7 +744,7 @@
             padding: 6px 16px;
             border-radius: 6px;
             border: 1px solid var(--border);
-            background: var(--bg-card);
+            background: #ffffff;
             color: var(--text-primary);
             cursor: pointer;
             font-size: 12px;
@@ -1255,7 +1255,7 @@
     <div class="candle-ctx-overlay" id="candleCtxOverlay">
         <div class="candle-ctx-popup" id="candleCtxPopup">
             <h3>
-                <span id="candleCtxTitle">Candle Data (20 bars)</span>
+                <span id="candleCtxTitle">Candle Data (21 bars)</span>
                 <button id="candleCtxClose" title="Close">&#x2715;</button>
             </h3>
             <textarea class="candle-ctx-textarea" id="candleCtxTextarea" readonly spellcheck="false"></textarea>
@@ -3001,7 +3001,7 @@
             const idx = Math.max(0, Math.min(Math.round(logical), currentCandles.length - 1));
 
             // 20-candle window ending at idx
-            const startIdx = Math.max(0, idx - 19);
+            const startIdx = Math.max(0, idx - 20);
             const candleWindow = currentCandles.slice(startIdx, idx + 1);
 
             const rows = candleWindow.map(c => {
