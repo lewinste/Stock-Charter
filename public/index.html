@@ -684,6 +684,80 @@
             font-family: 'JetBrains Mono', monospace;
         }
 
+        /* ===== CANDLE CONTEXT POPUP ===== */
+        .candle-ctx-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 300;
+        }
+        .candle-ctx-overlay.visible { display: block; }
+        .candle-ctx-popup {
+            position: absolute;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px 16px;
+            width: 460px;
+            box-shadow: 0 8px 28px rgba(0,0,0,0.22);
+            font-family: 'Inter', sans-serif;
+        }
+        .candle-ctx-popup h3 {
+            margin: 0 0 10px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .candle-ctx-popup h3 button {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1;
+            padding: 0 2px;
+        }
+        .candle-ctx-popup h3 button:hover { color: var(--text-primary); }
+        .candle-ctx-textarea {
+            width: 100%;
+            height: 200px;
+            box-sizing: border-box;
+            resize: vertical;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 8px;
+            line-height: 1.5;
+        }
+        .candle-ctx-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
+        .candle-ctx-actions button {
+            padding: 6px 16px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .candle-ctx-actions button:hover { background: var(--bg-hover); }
+        .candle-ctx-actions .btn-copy {
+            background: var(--accent);
+            color: #fff;
+            border-color: var(--accent);
+            margin-left: 8px;
+        }
+        .candle-ctx-actions .btn-copy:hover { background: var(--accent-hover); }
+
         /* ===== INDICATORS DROPDOWN ===== */
         .indicators-wrapper {
             position: relative;
@@ -1173,6 +1247,21 @@
             <div class="settings-actions">
                 <button id="settingsCancel">Cancel</button>
                 <button class="btn-apply" id="settingsApply">Apply</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Candle Context Popup -->
+    <div class="candle-ctx-overlay" id="candleCtxOverlay">
+        <div class="candle-ctx-popup" id="candleCtxPopup">
+            <h3>
+                <span id="candleCtxTitle">Candle Data (20 bars)</span>
+                <button id="candleCtxClose" title="Close">&#x2715;</button>
+            </h3>
+            <textarea class="candle-ctx-textarea" id="candleCtxTextarea" readonly spellcheck="false"></textarea>
+            <div class="candle-ctx-actions">
+                <button id="candleCtxCancel">Close</button>
+                <button class="btn-copy" id="candleCtxCopy">Copy JSON</button>
             </div>
         </div>
     </div>
@@ -2192,10 +2281,17 @@
             return data;
         }
 
+        let ma20ByTime = {}, ma50ByTime = {}, ma200ByTime = {};
         function recomputeBuiltInMAs() {
-            ma20Series.setData(computeSMA(currentCandles, state.params.ma20.period));
-            ma50Series.setData(computeSMA(currentCandles, state.params.ma50.period));
-            ma200Series.setData(computeSMA(currentCandles, state.params.ma200.period));
+            const d20  = computeSMA(currentCandles, state.params.ma20.period);
+            const d50  = computeSMA(currentCandles, state.params.ma50.period);
+            const d200 = computeSMA(currentCandles, state.params.ma200.period);
+            ma20Series.setData(d20);
+            ma50Series.setData(d50);
+            ma200Series.setData(d200);
+            ma20ByTime = {}; d20.forEach(d => { ma20ByTime[d.time] = d.value; });
+            ma50ByTime = {}; d50.forEach(d => { ma50ByTime[d.time] = d.value; });
+            ma200ByTime = {}; d200.forEach(d => { ma200ByTime[d.time] = d.value; });
         }
 
         function computeBB(candles, period, stddev) {
@@ -2875,6 +2971,71 @@
             _origApplyChartData(data, fitContent);
             applyMarkersToChart();
         };
+
+        // ----- Candle Context Popup (right-click) -----
+        const candleCtxOverlay = document.getElementById('candleCtxOverlay');
+        const candleCtxPopup   = document.getElementById('candleCtxPopup');
+        const candleCtxTextarea = document.getElementById('candleCtxTextarea');
+
+        function closeCandleCtx() {
+            candleCtxOverlay.classList.remove('visible');
+        }
+
+        document.getElementById('candleCtxClose').addEventListener('click', closeCandleCtx);
+        document.getElementById('candleCtxCancel').addEventListener('click', closeCandleCtx);
+        candleCtxOverlay.addEventListener('click', e => { if (e.target === candleCtxOverlay) closeCandleCtx(); });
+
+        document.getElementById('candleCtxCopy').addEventListener('click', () => {
+            navigator.clipboard.writeText(candleCtxTextarea.value).then(() => showToast('Copied to clipboard'));
+        });
+
+        mainEl.addEventListener('contextmenu', e => {
+            e.preventDefault();
+            if (currentCandles.length === 0) return;
+
+            // Find candle at click x position
+            const rect = mainEl.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const logical = mainChart.timeScale().coordinateToLogical(x);
+            if (logical === null) return;
+            const idx = Math.max(0, Math.min(Math.round(logical), currentCandles.length - 1));
+
+            // 20-candle window ending at idx
+            const startIdx = Math.max(0, idx - 19);
+            const candleWindow = currentCandles.slice(startIdx, idx + 1);
+
+            const rows = candleWindow.map(c => {
+                const row = {
+                    date:    c.time,
+                    open:    c.open,
+                    high:    c.high,
+                    low:     c.low,
+                    close:   c.close,
+                    volume:  volumeByTime[c.time] ?? null,
+                    vol_ma20: volMaByTime[c.time] != null ? Math.round(volMaByTime[c.time]) : null,
+                    ma20:    ma20ByTime[c.time]  ?? null,
+                    ma50:    ma50ByTime[c.time]  ?? null,
+                    ma200:   ma200ByTime[c.time] ?? null,
+                    rsi:     rsiByTime[c.time]   != null ? Math.round(rsiByTime[c.time] * 100) / 100 : null,
+                    cmf:     cmfByTime[c.time]   != null ? Math.round(cmfByTime[c.time] * 10000) / 10000 : null,
+                    cmf_sig: cmfSignalByTime[c.time] != null ? Math.round(cmfSignalByTime[c.time] * 10000) / 10000 : null,
+                };
+                return row;
+            });
+
+            candleCtxTextarea.value = JSON.stringify(rows, null, 2);
+
+            // Position popup near cursor, keeping it on screen
+            candleCtxOverlay.classList.add('visible');
+            const PW = 476, PH = 340;
+            const WW = globalThis.innerWidth, WH = globalThis.innerHeight;
+            let px = e.clientX + 12;
+            let py = e.clientY + 12;
+            if (px + PW > WW) px = e.clientX - PW - 12;
+            if (py + PH > WH) py = e.clientY - PH - 12;
+            candleCtxPopup.style.left = Math.max(8, px) + 'px';
+            candleCtxPopup.style.top  = Math.max(8, py) + 'px';
+        });
 
         // ----- Init -----
         loadChart().then(() => startPolling());
