@@ -1182,12 +1182,13 @@
         <div class="markers-dialog">
             <h3>Add Buy/Sell Markers</h3>
             <p class="hint">
-                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"}</code><br>
-                For patterns, add <code>"type": "Bearish Engulfing"</code> etc.
+                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"}</code><br>
+                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For <code>lowest_day</code>, price is ignored (uses candle close).
             </p>
             <textarea class="markers-textarea" id="markersTextarea" placeholder='[
   {"date": "2025-01-15", "price": 150.25, "event": "buy"},
-  {"date": "2025-06-10", "price": 185.50, "event": "sell"}
+  {"date": "2025-06-10", "price": 185.50, "event": "sell"},
+  {"date": "2025-03-22", "price": 0, "event": "lowest_day"}
 ]' spellcheck="false"></textarea>
             <div class="markers-actions">
                 <div class="left-actions">
@@ -1347,6 +1348,26 @@
 
         // Colored dot series on top of outline
         const markerDotSeries = mainChart.addLineSeries({
+            lineWidth: 0,
+            color: 'transparent',
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            priceScaleId: 'right',
+        });
+
+        // Black outline series for lowest_day dots (added before colored layer)
+        const lowestDayOutlineSeries = mainChart.addLineSeries({
+            lineWidth: 0,
+            color: 'transparent',
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            priceScaleId: 'right',
+        });
+
+        // Yellow dot series for lowest_day on top of outline
+        const lowestDayDotSeries = mainChart.addLineSeries({
             lineWidth: 0,
             color: 'transparent',
             priceLineVisible: false,
@@ -2677,6 +2698,10 @@
                 markerOutlineSeries.setMarkers([]);
                 markerDotSeries.setData([]);
                 markerDotSeries.setMarkers([]);
+                lowestDayOutlineSeries.setData([]);
+                lowestDayOutlineSeries.setMarkers([]);
+                lowestDayDotSeries.setData([]);
+                lowestDayDotSeries.setMarkers([]);
                 patternOverlay.innerHTML = '';
                 updateMarkersCount();
                 return;
@@ -2718,6 +2743,26 @@
             markerDotSeries.setData(dotData);
             markerDotSeries.setMarkers(dotMarkers);
 
+            // Lowest-day dots — yellow circle with black border at candle close price
+            const candleByTime = {};
+            currentCandles.forEach(c => { candleByTime[c.time] = c; });
+            const lowestDays = [...activeMarkers]
+                .filter(m => m.event === 'lowest_day')
+                .sort((a, b) => a.date.localeCompare(b.date));
+            const lowestDotData = lowestDays
+                .filter(m => candleByTime[m.date])
+                .map(m => ({ time: m.date, value: candleByTime[m.date].close }));
+            const lowestOutlineMarkers = lowestDotData.map(d => ({
+                time: d.time, position: 'inBar', color: '#000000', shape: 'circle', size: 0.8, text: '',
+            }));
+            lowestDayOutlineSeries.setData(lowestDotData);
+            lowestDayOutlineSeries.setMarkers(lowestOutlineMarkers);
+            const lowestDotMarkers = lowestDotData.map(d => ({
+                time: d.time, position: 'inBar', color: '#FFD600', shape: 'circle', size: 0.5, text: '',
+            }));
+            lowestDayDotSeries.setData(lowestDotData);
+            lowestDayDotSeries.setMarkers(lowestDotMarkers);
+
             // Pattern markers — real SVG triangles via overlay
             renderPatternOverlay();
             updateMarkersCount();
@@ -2751,8 +2796,8 @@
                     if (!entry.date || entry.price == null || !entry.event) {
                         throw new Error('Each entry needs date, price, event');
                     }
-                    if (!['buy', 'sell', 'pattern', 'state'].includes(entry.event)) {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", or "state"`);
+                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day'].includes(entry.event)) {
+                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", or "lowest_day"`);
                     }
                     if (entry.event === 'pattern' && !entry.type) {
                         throw new Error('Pattern events require a "type" field');
