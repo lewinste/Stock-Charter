@@ -1182,8 +1182,8 @@
         <div class="markers-dialog">
             <h3>Add Buy/Sell Markers</h3>
             <p class="hint">
-                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"|"squeeze"}</code><br>
-                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For <code>lowest_day</code>/<code>squeeze</code>, price is ignored.
+                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"|"squeeze"|"trend"}</code><br>
+                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For trend: <code>"type": "uptrend"|"trans_up"|"trans_dn"|"downtrend"</code>. For <code>lowest_day</code>/<code>squeeze</code>/<code>trend</code>, price is ignored.
             </p>
             <textarea class="markers-textarea" id="markersTextarea" placeholder='[
   {"date": "2025-01-15", "price": 150.25, "event": "buy"},
@@ -2610,7 +2610,7 @@
         }
 
         function renderPatternOverlay() {
-            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze');
+            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze' || m.event === 'trend');
             if (svgMarkers.length === 0) { patternOverlay.innerHTML = ''; return; }
 
             const candleByTime = {};
@@ -2623,6 +2623,13 @@
             const items = [];
 
             const sellDates = new Set(activeMarkers.filter(m => m.event === 'sell').map(m => m.date));
+
+            const TREND_COLORS = {
+                uptrend:  '#2e7d32',
+                trans_up: '#fdd835',
+                trans_dn: '#FF6D00',
+                downtrend: '#D32F2F',
+            };
 
             const STATE_COLORS = {
                 IDLE:        '#9e9e9e',
@@ -2699,6 +2706,27 @@
                         `);
                         // Advance: total height of "=" + gap
                         currentY = bar1Top - 5;
+                    } else if (m.event === 'trend') {
+                        // Flag: vertical pole + right-pointing triangular pennant
+                        const POLE_H = 14; // pole height
+                        const FLAG_W = 10; // flag horizontal extent
+                        const FLAG_H = 8;  // flag total height
+                        const poleTop = currentY - POLE_H;
+                        const poleX   = x - 1; // pole left edge (1px wide via stroke)
+                        const flagTop    = poleTop;
+                        const flagMid    = flagTop + FLAG_H / 2;
+                        const flagBottom = flagTop + FLAG_H;
+                        const fillColor  = TREND_COLORS[m.type] || '#9e9e9e';
+                        items.push(`
+                            <line x1="${poleX}" y1="${currentY}" x2="${poleX}" y2="${poleTop}"
+                                stroke="#000000" stroke-width="2.5" stroke-linecap="round"/>
+                            <line x1="${poleX}" y1="${currentY}" x2="${poleX}" y2="${poleTop}"
+                                stroke="${fillColor}" stroke-width="1.5" stroke-linecap="round"/>
+                            <polygon points="${poleX},${flagTop} ${poleX + FLAG_W},${flagMid} ${poleX},${flagBottom}"
+                                fill="${fillColor}" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
+                        `);
+                        // Advance: pole height + gap
+                        currentY = poleTop - 4;
                     }
                 }
             }
@@ -2812,14 +2840,17 @@
                     if (!entry.date || entry.price == null || !entry.event) {
                         throw new Error('Each entry needs date, price, event');
                     }
-                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze'].includes(entry.event)) {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", "lowest_day", or "squeeze"`);
+                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend'].includes(entry.event)) {
+                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", "lowest_day", "squeeze", or "trend"`);
                     }
                     if (entry.event === 'pattern' && !entry.type) {
                         throw new Error('Pattern events require a "type" field');
                     }
                     if (entry.event === 'state' && !entry.type) {
                         throw new Error('State events require a "type" field (IDLE, ARMED, LONG, WATCH_RED, WATCH_GREEN)');
+                    }
+                    if (entry.event === 'trend' && !entry.type) {
+                        throw new Error('Trend events require a "type" field (uptrend, trans_up, trans_dn, downtrend)');
                     }
                     entry.price = parseFloat(entry.price);
                 }
