@@ -1271,8 +1271,8 @@
         <div class="markers-dialog">
             <h3>Add Buy/Sell Markers</h3>
             <p class="hint">
-                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"|"squeeze"|"trend"}</code><br>
-                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For trend: <code>"type": "uptrend"|"trans_up"|"trans_dn"|"downtrend"</code>. For <code>lowest_day</code>/<code>squeeze</code>/<code>trend</code>, price is ignored.
+                Paste JSON array of events. Each entry: <code>{"date": "YYYY-MM-DD", "price": 123.45, "event": "buy"|"sell"|"pattern"|"lowest_day"|"squeeze"|"trend"|"stop_buy"}</code><br>
+                For patterns, add <code>"type": "Bearish Engulfing"</code> etc. For trend: <code>"type": "uptrend"|"trans_up"|"trans_dn"|"downtrend"</code>. For <code>lowest_day</code>/<code>squeeze</code>/<code>trend</code>, price is ignored. For <code>stop_buy</code>, price sets the level.
             </p>
             <textarea class="markers-textarea" id="markersTextarea" placeholder='[
   {"date": "2025-01-15", "price": 150.25, "event": "buy"},
@@ -2716,7 +2716,7 @@
         }
 
         function renderPatternOverlay() {
-            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze' || m.event === 'trend');
+            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze' || m.event === 'trend' || m.event === 'stop_buy');
             if (svgMarkers.length === 0) { patternOverlay.innerHTML = ''; return; }
 
             const candleByTime = {};
@@ -2837,6 +2837,20 @@
                 }
             }
 
+            // stop_buy: green "-" with black border at exact price level
+            const DASH_W = 8;  // half-width of dash bar
+            const DASH_H = 3;  // bar thickness
+            for (const m of activeMarkers.filter(m => m.event === 'stop_buy')) {
+                const x = mainChart.timeScale().timeToCoordinate(m.date);
+                if (x === null || x === undefined) continue;
+                const y = candleSeries.priceToCoordinate(m.price);
+                if (y === null || y === undefined) continue;
+                items.push(`
+                    <rect x="${x - DASH_W}" y="${y - DASH_H / 2}" width="${DASH_W * 2}" height="${DASH_H}"
+                        fill="#2e7d32" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
+                `);
+            }
+
             patternOverlay.innerHTML =
                 `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0">${items.join('')}</svg>`;
         }
@@ -2946,8 +2960,8 @@
                     if (!entry.date || entry.price == null || !entry.event) {
                         throw new Error('Each entry needs date, price, event');
                     }
-                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend'].includes(entry.event)) {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", "lowest_day", "squeeze", or "trend"`);
+                    if (!['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend', 'stop_buy'].includes(entry.event)) {
+                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", "lowest_day", "squeeze", "trend", or "stop_buy"`);
                     }
                     if (entry.event === 'pattern' && !entry.type) {
                         throw new Error('Pattern events require a "type" field');
