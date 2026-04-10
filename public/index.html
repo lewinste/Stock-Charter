@@ -2961,7 +2961,7 @@
                         throw new Error('Each entry needs date, price, event');
                     }
                     if (!['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend', 'stop_buy'].includes(entry.event)) {
-                        throw new Error(`Invalid event "${entry.event}" — use "buy", "sell", "pattern", "state", "lowest_day", "squeeze", "trend", or "stop_buy"`);
+                        continue; // skip unknown events
                     }
                     if (entry.event === 'pattern' && !entry.type) {
                         throw new Error('Pattern events require a "type" field');
@@ -2974,7 +2974,8 @@
                     }
                     entry.price = parseFloat(entry.price);
                 }
-                activeMarkers = parsed;
+                const knownEvents = ['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend', 'stop_buy'];
+                activeMarkers = parsed.filter(e => knownEvents.includes(e.event));
                 applyMarkersToChart();
                 closeMarkersModal();
             } catch (e) {
