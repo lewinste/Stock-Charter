@@ -1510,6 +1510,15 @@
             baseLineVisible: false,
         });
 
+        const rsiEma3Series = rsiChart.addLineSeries({
+            color: 'rgba(220,50,50,0.85)', lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            baseLineVisible: false,
+        });
+
         // RSI reference lines
         rsiSeries.createPriceLine({ price: 70, color: 'rgba(126,87,194,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
         rsiSeries.createPriceLine({ price: 40, color: 'rgba(180,180,180,0.5)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
@@ -1833,6 +1842,7 @@
             volMaSeries.setData(data.vol_ma14 || []);
 
             rsiSeries.setData(data.rsi);
+            rsiEma3Series.setData(data.rsi_ema3 || []);
             rsiBandSeries.setData(data.rsi.map(d => ({ time: d.time, value: 70 })));
             cmfSeries.setData(data.cmf || []);
             cmfSignalSeries.setData(data.cmf_signal || []);

@@ -273,6 +273,7 @@ class handler(BaseHTTPRequestHandler):
         volumes = [r["volume"] for r in all_rows]
 
         rsi = compute_rsi(closes, rsi_period)
+        rsi_ema3 = compute_ema_from_values(rsi, 3)
         supertrend, st_dir = compute_supertrend(highs, lows, closes, st_period, st_mult)
         ma_vals = compute_ma(closes, ma_period)
         vol_ma14 = compute_ma(volumes, 14)
@@ -284,6 +285,7 @@ class handler(BaseHTTPRequestHandler):
         volume_data = []
         vol_ma_data = []
         rsi_data = []
+        rsi_ema3_data = []
         supertrend_data = []
         ma_data = []
         cmf_data = []
@@ -307,6 +309,9 @@ class handler(BaseHTTPRequestHandler):
             if rsi[i] is not None:
                 rsi_data.append({"time": t, "value": rsi[i]})
 
+            if rsi_ema3[i] is not None:
+                rsi_ema3_data.append({"time": t, "value": rsi_ema3[i]})
+
             if supertrend[i] is not None:
                 st_val = round(supertrend[i], 2)
                 st_color = "#26a69a" if st_dir[i] == 1 else "#ef5350"
@@ -329,6 +334,7 @@ class handler(BaseHTTPRequestHandler):
             "volume": volume_data,
             "vol_ma14": vol_ma_data,
             "rsi": rsi_data,
+            "rsi_ema3": rsi_ema3_data,
             "supertrend": supertrend_data,
             "ma": ma_data,
             "cmf": cmf_data,
