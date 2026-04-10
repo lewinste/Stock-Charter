@@ -1562,6 +1562,7 @@
         let rsiByTime = {};
         let cmfByTime = {};
         let cmfSignalByTime = {};
+        let stByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1833,6 +1834,8 @@
             if (data.cmf) data.cmf.forEach(c => { cmfByTime[c.time] = c.value; });
             cmfSignalByTime = {};
             if (data.cmf_signal) data.cmf_signal.forEach(c => { cmfSignalByTime[c.time] = c.value; });
+            stByTime = {};
+            if (data.supertrend) data.supertrend.forEach(s => { stByTime[s.time] = s.value; });;
 
             candleSeries.setData(data.candles);
             recomputeBuiltInMAs();
@@ -3045,6 +3048,7 @@
                     rsi:     rsiByTime[c.time]   != null ? Math.round(rsiByTime[c.time] * 100) / 100 : null,
                     cmf:     cmfByTime[c.time]   != null ? Math.round(cmfByTime[c.time] * 10000) / 10000 : null,
                     cmf_sig: cmfSignalByTime[c.time] != null ? Math.round(cmfSignalByTime[c.time] * 10000) / 10000 : null,
+                    st:      stByTime[c.time]    != null ? Math.round(stByTime[c.time] * 100) / 100 : null,
                 };
                 return row;
             });
