@@ -2716,7 +2716,7 @@
         }
 
         function renderPatternOverlay() {
-            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze' || m.event === 'trend' || m.event === 'stop_buy');
+            const svgMarkers = activeMarkers.filter(m => m.event === 'pattern' || m.event === 'state' || m.event === 'squeeze' || m.event === 'trend' || m.event === 'stop_buy' || m.event === 'SL');
             if (svgMarkers.length === 0) { patternOverlay.innerHTML = ''; return; }
 
             const candleByTime = {};
@@ -2837,17 +2837,18 @@
                 }
             }
 
-            // stop_buy: green "-" with black border at exact price level
+            // stop_buy / SL: dash at exact price level
             const DASH_W = 8;  // half-width of dash bar
             const DASH_H = 3;  // bar thickness
-            for (const m of activeMarkers.filter(m => m.event === 'stop_buy')) {
+            for (const m of activeMarkers.filter(m => m.event === 'stop_buy' || m.event === 'SL')) {
                 const x = mainChart.timeScale().timeToCoordinate(m.date);
                 if (x === null || x === undefined) continue;
                 const y = candleSeries.priceToCoordinate(m.price);
                 if (y === null || y === undefined) continue;
+                const fill = m.event === 'SL' ? '#b71c1c' : '#2e7d32';
                 items.push(`
                     <rect x="${x - DASH_W}" y="${y - DASH_H / 2}" width="${DASH_W * 2}" height="${DASH_H}"
-                        fill="#2e7d32" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
+                        fill="${fill}" stroke="#000000" stroke-width="1" stroke-linejoin="round"/>
                 `);
             }
 
@@ -2974,7 +2975,7 @@
                     }
                     entry.price = parseFloat(entry.price);
                 }
-                const knownEvents = ['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend', 'stop_buy'];
+                const knownEvents = ['buy', 'sell', 'pattern', 'state', 'lowest_day', 'squeeze', 'trend', 'stop_buy', 'SL'];
                 activeMarkers = parsed.filter(e => knownEvents.includes(e.event));
                 applyMarkersToChart();
                 closeMarkersModal();
