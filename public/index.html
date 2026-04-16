@@ -1216,6 +1216,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                     </button>
                     <span class="ind-val" id="rsiLegendVal" style="color:var(--purple)"></span>
+                    <span class="ind-val" id="rsiEma3LegendVal" style="color:rgba(220,50,50,0.85)"></span>
                 </div>
             </div>
             <div id="rsi-chart"></div>
@@ -1560,6 +1561,7 @@
         let volumeByTime = {};
         let volMaByTime = {};
         let rsiByTime = {};
+        let rsiEma3ByTime = {};
         let cmfByTime = {};
         let cmfSignalByTime = {};
         let stByTime = {};
@@ -1625,6 +1627,7 @@
         const ma200LegendVal = document.getElementById('ma200LegendVal');
         const stLegendVal = document.getElementById('stLegendVal');
         const rsiLegendVal = document.getElementById('rsiLegendVal');
+        const rsiEma3LegendVal = document.getElementById('rsiEma3LegendVal');
         const cmfLegendVal = document.getElementById('cmfLegendVal');
 
         function updateIndLegendValues(param) {
@@ -1645,6 +1648,8 @@
             if (param && param.seriesData) {
                 const rsiData = param.seriesData.get(rsiSeries);
                 rsiLegendVal.textContent = rsiData ? rsiData.value.toFixed(4) : '';
+                const ema3Data = param.seriesData.get(rsiEma3Series);
+                rsiEma3LegendVal.textContent = ema3Data ? ema3Data.value.toFixed(4) : '';
             }
         }
 
@@ -1663,6 +1668,7 @@
             ma200LegendVal.textContent = '';
             stLegendVal.textContent = '';
             rsiLegendVal.textContent = '';
+            rsiEma3LegendVal.textContent = '';
             cmfLegendVal.textContent = '';
             const sigEl = document.getElementById('cmfSignalLegendVal');
             if (sigEl) sigEl.textContent = '';
@@ -1698,6 +1704,7 @@
                     updateVolLegend(lastV.value, lastV.time);
                 }
                 rsiLegendVal.textContent = '';
+                rsiEma3LegendVal.textContent = '';
                 cmfLegendVal.textContent = '';
                 return;
             }
@@ -1705,6 +1712,8 @@
             if (bar) updateVolLegend(bar.value, param.time);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+            const rsiE3 = rsiEma3ByTime[param.time];
+            rsiEma3LegendVal.textContent = rsiE3 != null ? rsiE3.toFixed(2) : '';
             updateCmfLegendValue(param.time);
         });
 
@@ -1741,6 +1750,8 @@
                 if (vol != null) updateVolLegend(vol, param.time);
                 const rsi = rsiByTime[param.time];
                 rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+                const rsiE3c = rsiEma3ByTime[param.time];
+                rsiEma3LegendVal.textContent = rsiE3c != null ? rsiE3c.toFixed(2) : '';
                 updateCmfLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
@@ -1748,6 +1759,7 @@
                     updateVolLegend(lastV.value, lastV.time);
                 }
                 rsiLegendVal.textContent = '';
+                rsiEma3LegendVal.textContent = '';
                 cmfLegendVal.textContent = '';
             }
         });
@@ -1778,6 +1790,8 @@
             updateCustomIndLegendValues(param);
             const rsi = rsiByTime[param.time];
             rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+            const rsiE3m = rsiEma3ByTime[param.time];
+            rsiEma3LegendVal.textContent = rsiE3m != null ? rsiE3m.toFixed(2) : '';
             updateCmfLegendValue(param.time);
         });
 
@@ -1830,6 +1844,8 @@
             if (data.vol_ma14) data.vol_ma14.forEach(v => { volMaByTime[v.time] = v.value; });
             rsiByTime = {};
             data.rsi.forEach(r => { rsiByTime[r.time] = r.value; });
+            rsiEma3ByTime = {};
+            if (data.rsi_ema3) data.rsi_ema3.forEach(r => { rsiEma3ByTime[r.time] = r.value; });
             cmfByTime = {};
             if (data.cmf) data.cmf.forEach(c => { cmfByTime[c.time] = c.value; });
             cmfSignalByTime = {};
