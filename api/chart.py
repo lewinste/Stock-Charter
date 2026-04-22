@@ -188,6 +188,27 @@ def compute_cmf(highs, lows, closes, volumes, period=20):
     return cmf
 
 
+def compute_macd_v(closes, highs, lows, fast=12, slow=26, signal=9, atr_len=26):
+    """Compute volatility-normalised MACD (Spiroglou 2022).
+    MACD-V = ((EMA(fast) - EMA(slow)) / ATR(atr_len)) * 100
+    """
+    n = len(closes)
+    fast_ema = compute_ema_from_values(closes, fast)
+    slow_ema = compute_ema_from_values(closes, slow)
+    atr_vals = compute_atr(highs, lows, closes, atr_len)
+    macdv = [None] * n
+    for i in range(n):
+        if (fast_ema[i] is not None and slow_ema[i] is not None
+                and atr_vals[i] is not None and atr_vals[i] != 0):
+            macdv[i] = (fast_ema[i] - slow_ema[i]) / atr_vals[i] * 100
+    sig = compute_ema_from_values(macdv, signal)
+    hist = [None] * n
+    for i in range(n):
+        if macdv[i] is not None and sig[i] is not None:
+            hist[i] = macdv[i] - sig[i]
+    return macdv, sig, hist
+
+
 def compute_macd(closes, fast=12, slow=26, signal=9):
     """Compute MACD line, signal line, and histogram from close prices."""
     n = len(closes)
@@ -246,6 +267,10 @@ class handler(BaseHTTPRequestHandler):
         macd_fast = int(params.get("macd_fast", [12])[0])
         macd_slow = int(params.get("macd_slow", [26])[0])
         macd_signal = int(params.get("macd_signal", [9])[0])
+        macdv_fast = int(params.get("macdv_fast", [12])[0])
+        macdv_slow = int(params.get("macdv_slow", [26])[0])
+        macdv_signal = int(params.get("macdv_signal", [9])[0])
+        macdv_atr = int(params.get("macdv_atr", [26])[0])
 
         if period not in PERIOD_DAYS:
             period = "1y"
@@ -297,6 +322,7 @@ class handler(BaseHTTPRequestHandler):
         rsi_ema3 = compute_ema_from_values(rsi, 3)
         atr = compute_atr(highs, lows, closes, atr_period)
         macd_line, macd_sig, macd_hist = compute_macd(closes, macd_fast, macd_slow, macd_signal)
+        macdv_line, macdv_sig, macdv_hist = compute_macd_v(closes, highs, lows, macdv_fast, macdv_slow, macdv_signal, macdv_atr)
         supertrend, st_dir = compute_supertrend(highs, lows, closes, st_period, st_mult)
         ma_vals = compute_ma(closes, ma_period)
         vol_ma14 = compute_ma(volumes, 14)
@@ -313,6 +339,9 @@ class handler(BaseHTTPRequestHandler):
         macd_data = []
         macd_signal_data = []
         macd_hist_data = []
+        macdv_data = []
+        macdv_signal_data = []
+        macdv_hist_data = []
         supertrend_data = []
         ma_data = []
         cmf_data = []
@@ -351,6 +380,15 @@ class handler(BaseHTTPRequestHandler):
                 color = "rgba(38,166,154,0.6)" if h >= 0 else "rgba(239,83,80,0.6)"
                 macd_hist_data.append({"time": t, "value": h, "color": color})
 
+            if macdv_line[i] is not None:
+                macdv_data.append({"time": t, "value": round(macdv_line[i], 2)})
+            if macdv_sig[i] is not None:
+                macdv_signal_data.append({"time": t, "value": round(macdv_sig[i], 2)})
+            if macdv_hist[i] is not None:
+                hv = round(macdv_hist[i], 2)
+                color_v = "rgba(38,166,154,0.6)" if hv >= 0 else "rgba(239,83,80,0.6)"
+                macdv_hist_data.append({"time": t, "value": hv, "color": color_v})
+
             if supertrend[i] is not None:
                 st_val = round(supertrend[i], 2)
                 st_color = "#26a69a" if st_dir[i] == 1 else "#ef5350"
@@ -378,6 +416,9 @@ class handler(BaseHTTPRequestHandler):
             "macd": macd_data,
             "macd_signal": macd_signal_data,
             "macd_hist": macd_hist_data,
+            "macdv": macdv_data,
+            "macdv_signal": macdv_signal_data,
+            "macdv_hist": macdv_hist_data,
             "supertrend": supertrend_data,
             "ma": ma_data,
             "cmf": cmf_data,

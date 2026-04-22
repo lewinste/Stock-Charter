@@ -480,6 +480,11 @@
             border-top: 1px solid var(--border);
         }
 
+        #macdv-chart {
+            height: 130px;
+            border-top: 1px solid var(--border);
+        }
+
         /* Volume legend value (inline in ind-legend) */
         #volLegend:empty { display: none; }
 
@@ -1130,6 +1135,16 @@
                         <button class="ind-toggle on" data-ind="macd" id="indToggleMacd"></button>
                     </div>
                 </div>
+                <div class="ind-dropdown-item" data-ind="macdv">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#d81b60"></span>
+                        <span class="ind-dropdown-name">MACD-V</span>
+                        <span class="ind-dropdown-param" id="indParamMacdv">(12,26,9,ATR26)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-toggle on" data-ind="macdv" id="indToggleMacdv"></button>
+                    </div>
+                </div>
                 <div id="customIndicatorsList"></div>
                 <div class="ind-dropdown-sep"></div>
                 <div style="position:relative">
@@ -1296,6 +1311,22 @@
             </div>
             <div id="macd-chart"></div>
         </div>
+        <div id="macdv-chart-container" style="position:relative">
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="macdvLegendRow" data-ind="macdv">
+                    <span class="ind-name" id="macdvLegendName" style="color:#d81b60">MACD-V (12,26,9,ATR26)</span>
+                    <button class="ind-btn eye-btn" data-ind="macdv" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <span class="ind-val" id="macdvLegendVal" style="color:#d81b60"></span>
+                    <span class="ind-name" style="color:#ff6d00;margin-left:6px">Sig</span>
+                    <span class="ind-val" id="macdvSignalLegendVal" style="color:#ff6d00"></span>
+                    <span class="ind-name" style="color:var(--text-muted);margin-left:6px">Hist</span>
+                    <span class="ind-val" id="macdvHistLegendVal" style="color:var(--text-muted)"></span>
+                </div>
+            </div>
+            <div id="macdv-chart"></div>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -1362,7 +1393,7 @@
         const state = {
             ticker: 'SPY',
             period: '6mo',
-            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true },
+            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true },
             params: {
                 ma20:  { period: 20,  color: '#00bcd4', lineWidth: 1,   lineStyle: 0 },
                 ma50:  { period: 50,  color: '#ff9800', lineWidth: 2,   lineStyle: 0 },
@@ -1372,6 +1403,7 @@
                 cmf: { period: 20, color: '#00897b', lineWidth: 1.5, lineStyle: 0 },
                 atr: { period: 14, color: '#ab47bc', lineWidth: 1.5, lineStyle: 0 },
                 macd: { fast: 12, slow: 26, signal: 9, color: '#2962ff', lineWidth: 1.5, lineStyle: 0 },
+                macdv: { fast: 12, slow: 26, signal: 9, atr: 26, color: '#d81b60', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -1421,6 +1453,28 @@
         });
 
         const rsiChart = LightweightCharts.createChart(rsiEl, {
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#6b7280',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: '#f5f5f7' },
+                horzLines: { visible: false, color: 'transparent' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+                horzLine: { visible: false },
+            },
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70, scaleMargins: { top: 0.1, bottom: 0.1 } },
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
+            autoSize: true,
+        });
+
+        const macdvEl = document.getElementById('macdv-chart');
+        const macdvChart = LightweightCharts.createChart(macdvEl, {
             layout: {
                 background: { color: '#ffffff' },
                 textColor: '#6b7280',
@@ -1517,12 +1571,13 @@
                 isSyncing = false;
             });
         }
-        syncRange(mainChart, [volumeChart, rsiChart, cmfChart, atrChart, macdChart]);
-        syncRange(volumeChart, [mainChart, rsiChart, cmfChart, atrChart, macdChart]);
-        syncRange(rsiChart, [mainChart, volumeChart, cmfChart, atrChart, macdChart]);
-        syncRange(cmfChart, [mainChart, volumeChart, rsiChart, atrChart, macdChart]);
-        syncRange(atrChart, [mainChart, volumeChart, rsiChart, cmfChart, macdChart]);
-        syncRange(macdChart, [mainChart, volumeChart, rsiChart, cmfChart, atrChart]);
+        syncRange(mainChart, [volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart]);
+        syncRange(volumeChart, [mainChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart]);
+        syncRange(rsiChart, [mainChart, volumeChart, cmfChart, atrChart, macdChart, macdvChart]);
+        syncRange(cmfChart, [mainChart, volumeChart, rsiChart, atrChart, macdChart, macdvChart]);
+        syncRange(atrChart, [mainChart, volumeChart, rsiChart, cmfChart, macdChart, macdvChart]);
+        syncRange(macdChart, [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdvChart]);
+        syncRange(macdvChart, [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart]);
 
         // ----- Series on main chart (candles + indicators only) -----
         const candleSeries = mainChart.addCandlestickSeries({
@@ -1689,6 +1744,32 @@
         });
         macdSeries.createPriceLine({ price: 0, color: 'rgba(41,98,255,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
 
+        // ----- Series on MACD-V chart -----
+        const macdvHistSeries = macdvChart.addHistogramSeries({
+            priceLineVisible: false,
+            lastValueVisible: false,
+        });
+        const macdvSeries = macdvChart.addLineSeries({
+            color: '#d81b60', lineWidth: 1.5,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            baseLineVisible: false,
+        });
+        const macdvSignalSeries = macdvChart.addLineSeries({
+            color: '#ff6d00', lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        // Reference bands per Spiroglou paper
+        macdvSeries.createPriceLine({ price: 150,  color: 'rgba(216,27,96,0.35)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        macdvSeries.createPriceLine({ price: 100,  color: 'rgba(216,27,96,0.20)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false });
+        macdvSeries.createPriceLine({ price:  50,  color: 'rgba(180,180,180,0.5)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        macdvSeries.createPriceLine({ price:   0,  color: 'rgba(216,27,96,0.45)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Solid,  axisLabelVisible: false });
+        macdvSeries.createPriceLine({ price: -50,  color: 'rgba(180,180,180,0.5)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        macdvSeries.createPriceLine({ price:-100,  color: 'rgba(216,27,96,0.20)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false });
+        macdvSeries.createPriceLine({ price:-150,  color: 'rgba(216,27,96,0.35)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
         // Store candle data for crosshair legend
         let currentCandles = [];
         let currentVolume = [];
@@ -1703,6 +1784,9 @@
         let macdByTime = {};
         let macdSignalByTime = {};
         let macdHistByTime = {};
+        let macdvByTime = {};
+        let macdvSignalByTime = {};
+        let macdvHistByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1771,6 +1855,9 @@
         const macdLegendVal = document.getElementById('macdLegendVal');
         const macdSignalLegendVal = document.getElementById('macdSignalLegendVal');
         const macdHistLegendVal = document.getElementById('macdHistLegendVal');
+        const macdvLegendVal = document.getElementById('macdvLegendVal');
+        const macdvSignalLegendVal = document.getElementById('macdvSignalLegendVal');
+        const macdvHistLegendVal = document.getElementById('macdvHistLegendVal');
 
         function updateIndLegendValues(param) {
             if (param && param.seriesData) {
@@ -1817,6 +1904,15 @@
             macdHistLegendVal.textContent = h != null ? h.toFixed(4) : '';
         }
 
+        function updateMacdvLegendValue(time) {
+            const m = macdvByTime[time];
+            const s = macdvSignalByTime[time];
+            const h = macdvHistByTime[time];
+            macdvLegendVal.textContent = m != null ? m.toFixed(2) : '';
+            macdvSignalLegendVal.textContent = s != null ? s.toFixed(2) : '';
+            macdvHistLegendVal.textContent = h != null ? h.toFixed(2) : '';
+        }
+
         function showLastIndValues() {
             // Show last known values when crosshair leaves
             ma20LegendVal.textContent = '';
@@ -1830,6 +1926,9 @@
             macdLegendVal.textContent = '';
             macdSignalLegendVal.textContent = '';
             macdHistLegendVal.textContent = '';
+            macdvLegendVal.textContent = '';
+            macdvSignalLegendVal.textContent = '';
+            macdvHistLegendVal.textContent = '';
             const sigEl = document.getElementById('cmfSignalLegendVal');
             if (sigEl) sigEl.textContent = '';
             if (typeof updateCustomIndLegendValues === 'function') updateCustomIndLegendValues(null);
@@ -1859,6 +1958,7 @@
                 { chart: cmfChart, series: cmfSeries },
                 { chart: atrChart, series: atrSeries },
                 { chart: macdChart, series: macdSeries },
+                { chart: macdvChart, series: macdvSeries },
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(volumeSeries)) {
                 if (currentVolume.length > 0) {
@@ -1872,6 +1972,9 @@
                 macdLegendVal.textContent = '';
                 macdSignalLegendVal.textContent = '';
                 macdHistLegendVal.textContent = '';
+                macdvLegendVal.textContent = '';
+                macdvSignalLegendVal.textContent = '';
+                macdvHistLegendVal.textContent = '';
                 return;
             }
             const bar = param.seriesData.get(volumeSeries);
@@ -1883,6 +1986,7 @@
             updateCmfLegendValue(param.time);
             updateAtrLegendValue(param.time);
             updateMacdLegendValue(param.time);
+            updateMacdvLegendValue(param.time);
         });
 
         // RSI crosshair hover
@@ -1893,6 +1997,7 @@
                 { chart: cmfChart, series: cmfSeries },
                 { chart: atrChart, series: atrSeries },
                 { chart: macdChart, series: macdSeries },
+                { chart: macdvChart, series: macdvSeries },
             ]);
             updateRsiLegendValue(param);
             if (param.time) {
@@ -1901,6 +2006,7 @@
                 updateCmfLegendValue(param.time);
                 updateAtrLegendValue(param.time);
                 updateMacdLegendValue(param.time);
+                updateMacdvLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
@@ -1911,6 +2017,9 @@
                 macdLegendVal.textContent = '';
                 macdSignalLegendVal.textContent = '';
                 macdHistLegendVal.textContent = '';
+                macdvLegendVal.textContent = '';
+                macdvSignalLegendVal.textContent = '';
+                macdvHistLegendVal.textContent = '';
             }
         });
 
@@ -1922,6 +2031,7 @@
                 { chart: rsiChart, series: rsiSeries },
                 { chart: atrChart, series: atrSeries },
                 { chart: macdChart, series: macdSeries },
+                { chart: macdvChart, series: macdvSeries },
             ]);
             if (param.time) {
                 const vol = volumeByTime[param.time];
@@ -1933,6 +2043,7 @@
                 updateCmfLegendValue(param.time);
                 updateAtrLegendValue(param.time);
                 updateMacdLegendValue(param.time);
+                updateMacdvLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
@@ -1945,6 +2056,9 @@
                 macdLegendVal.textContent = '';
                 macdSignalLegendVal.textContent = '';
                 macdHistLegendVal.textContent = '';
+                macdvLegendVal.textContent = '';
+                macdvSignalLegendVal.textContent = '';
+                macdvHistLegendVal.textContent = '';
             }
         });
 
@@ -1956,6 +2070,7 @@
                 { chart: rsiChart, series: rsiSeries },
                 { chart: cmfChart, series: cmfSeries },
                 { chart: macdChart, series: macdSeries },
+                { chart: macdvChart, series: macdvSeries },
             ]);
             if (param.time) {
                 const vol = volumeByTime[param.time];
@@ -1967,6 +2082,7 @@
                 updateCmfLegendValue(param.time);
                 updateAtrLegendValue(param.time);
                 updateMacdLegendValue(param.time);
+                updateMacdvLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
@@ -1979,6 +2095,9 @@
                 macdLegendVal.textContent = '';
                 macdSignalLegendVal.textContent = '';
                 macdHistLegendVal.textContent = '';
+                macdvLegendVal.textContent = '';
+                macdvSignalLegendVal.textContent = '';
+                macdvHistLegendVal.textContent = '';
             }
         });
 
@@ -1990,6 +2109,7 @@
                 { chart: rsiChart, series: rsiSeries },
                 { chart: cmfChart, series: cmfSeries },
                 { chart: atrChart, series: atrSeries },
+                { chart: macdvChart, series: macdvSeries },
             ]);
             if (param.time) {
                 const vol = volumeByTime[param.time];
@@ -2001,6 +2121,7 @@
                 updateCmfLegendValue(param.time);
                 updateAtrLegendValue(param.time);
                 updateMacdLegendValue(param.time);
+                updateMacdvLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
@@ -2013,6 +2134,48 @@
                 macdLegendVal.textContent = '';
                 macdSignalLegendVal.textContent = '';
                 macdHistLegendVal.textContent = '';
+                macdvLegendVal.textContent = '';
+                macdvSignalLegendVal.textContent = '';
+                macdvHistLegendVal.textContent = '';
+            }
+        });
+
+        // MACD-V crosshair hover
+        macdvChart.subscribeCrosshairMove(param => {
+            syncCrosshairFromSource(macdvChart, param, [
+                { chart: mainChart, series: candleSeries },
+                { chart: volumeChart, series: volumeSeries },
+                { chart: rsiChart, series: rsiSeries },
+                { chart: cmfChart, series: cmfSeries },
+                { chart: atrChart, series: atrSeries },
+                { chart: macdChart, series: macdSeries },
+            ]);
+            if (param.time) {
+                const vol = volumeByTime[param.time];
+                if (vol != null) updateVolLegend(vol, param.time);
+                const rsi = rsiByTime[param.time];
+                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+                const rsiE3mv = rsiEma3ByTime[param.time];
+                rsiEma3LegendVal.textContent = rsiE3mv != null ? rsiE3mv.toFixed(2) : '';
+                updateCmfLegendValue(param.time);
+                updateAtrLegendValue(param.time);
+                updateMacdLegendValue(param.time);
+                updateMacdvLegendValue(param.time);
+            } else {
+                if (currentVolume.length > 0) {
+                    const lastV = currentVolume[currentVolume.length - 1];
+                    updateVolLegend(lastV.value, lastV.time);
+                }
+                rsiLegendVal.textContent = '';
+                rsiEma3LegendVal.textContent = '';
+                cmfLegendVal.textContent = '';
+                atrLegendVal.textContent = '';
+                macdLegendVal.textContent = '';
+                macdSignalLegendVal.textContent = '';
+                macdHistLegendVal.textContent = '';
+                macdvLegendVal.textContent = '';
+                macdvSignalLegendVal.textContent = '';
+                macdvHistLegendVal.textContent = '';
             }
         });
 
@@ -2024,6 +2187,7 @@
                 { chart: cmfChart, series: cmfSeries },
                 { chart: atrChart, series: atrSeries },
                 { chart: macdChart, series: macdSeries },
+                { chart: macdvChart, series: macdvSeries },
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(candleSeries)) {
                 if (currentCandles.length > 0) {
@@ -2049,6 +2213,7 @@
             updateCmfLegendValue(param.time);
             updateAtrLegendValue(param.time);
             updateMacdLegendValue(param.time);
+            updateMacdvLegendValue(param.time);
         });
 
         // ----- Ticker header update -----
@@ -2116,6 +2281,12 @@
             if (data.macd_signal) data.macd_signal.forEach(m => { macdSignalByTime[m.time] = m.value; });
             macdHistByTime = {};
             if (data.macd_hist) data.macd_hist.forEach(m => { macdHistByTime[m.time] = m.value; });
+            macdvByTime = {};
+            if (data.macdv) data.macdv.forEach(m => { macdvByTime[m.time] = m.value; });
+            macdvSignalByTime = {};
+            if (data.macdv_signal) data.macdv_signal.forEach(m => { macdvSignalByTime[m.time] = m.value; });
+            macdvHistByTime = {};
+            if (data.macdv_hist) data.macdv_hist.forEach(m => { macdvHistByTime[m.time] = m.value; });
 
             const candleTimes = data.candles.map(c => c.time);
             const alignToCandles = (arr) => {
@@ -2140,6 +2311,9 @@
             macdSeries.setData(alignToCandles(data.macd || []));
             macdSignalSeries.setData(alignToCandles(data.macd_signal || []));
             macdHistSeries.setData(alignToCandles(data.macd_hist || []));
+            macdvSeries.setData(alignToCandles(data.macdv || []));
+            macdvSignalSeries.setData(alignToCandles(data.macdv_signal || []));
+            macdvHistSeries.setData(alignToCandles(data.macdv_hist || []));
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
@@ -2175,6 +2349,7 @@
                 cmfChart.timeScale().fitContent();
                 atrChart.timeScale().fitContent();
                 macdChart.timeScale().fitContent();
+                macdvChart.timeScale().fitContent();
             }
             applyVisibility();
         }
@@ -2184,7 +2359,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -2208,7 +2383,7 @@
             try {
                 const p = state.params;
                 const res = await fetch(
-                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}`
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}`
                 );
                 if (!res.ok) return;
                 const data = await res.json();
@@ -2259,12 +2434,16 @@
             const macdVisible = state.indicators.macd;
             document.getElementById('macd-chart-container').style.display = macdVisible ? 'block' : 'none';
 
+            const macdvVisible = state.indicators.macdv;
+            document.getElementById('macdv-chart-container').style.display = macdvVisible ? 'block' : 'none';
+
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             if (rsiVisible) rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
             if (cmfVisible) cmfChart.resize(cmfEl.clientWidth, cmfEl.clientHeight);
             if (atrVisible) atrChart.resize(atrEl.clientWidth, atrEl.clientHeight);
             if (macdVisible) macdChart.resize(macdEl.clientWidth, macdEl.clientHeight);
+            if (macdvVisible) macdvChart.resize(macdvEl.clientWidth, macdvEl.clientHeight);
         }
 
         // ----- UI helpers -----
@@ -2498,7 +2677,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd' };
+            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -2890,6 +3069,7 @@
             cmfChart.resize(cmfEl.clientWidth, cmfEl.clientHeight);
             atrChart.resize(atrEl.clientWidth, atrEl.clientHeight);
             macdChart.resize(macdEl.clientWidth, macdEl.clientHeight);
+            macdvChart.resize(macdvEl.clientWidth, macdvEl.clientHeight);
             renderPatternOverlay();
         });
 
@@ -3357,6 +3537,9 @@
                     macd:    macdByTime[c.time]      != null ? Math.round(macdByTime[c.time] * 10000) / 10000 : null,
                     macd_sig:macdSignalByTime[c.time]!= null ? Math.round(macdSignalByTime[c.time] * 10000) / 10000 : null,
                     macd_hist: macdHistByTime[c.time]!= null ? Math.round(macdHistByTime[c.time] * 10000) / 10000 : null,
+                    macdv:     macdvByTime[c.time]      != null ? Math.round(macdvByTime[c.time] * 100) / 100 : null,
+                    macdv_sig: macdvSignalByTime[c.time]!= null ? Math.round(macdvSignalByTime[c.time] * 100) / 100 : null,
+                    macdv_hist:macdvHistByTime[c.time]  != null ? Math.round(macdvHistByTime[c.time] * 100) / 100 : null,
                 };
                 return row;
             });
