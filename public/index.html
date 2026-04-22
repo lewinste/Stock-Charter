@@ -3362,9 +3362,20 @@
             const BUY_COLOR = '#006B2D';
             const SELL_COLOR = '#B71C1C';
 
+            // Keep every helper series aligned to the candle timeline so the main
+            // chart's logical time axis doesn't diverge from the sub-panes when
+            // sparse marker data is set.
+            const candleTimes = currentCandles.map(c => c.time);
+            const candleTimeSet = new Set(candleTimes);
+            const padToCandles = (arr) => {
+                const by = {};
+                for (const d of arr) if (candleTimeSet.has(d.time)) by[d.time] = d;
+                return candleTimes.map(t => by[t] || { time: t });
+            };
+
             // Arrow markers on candle series — buy/sell only
             const arrows = activeMarkers
-                .filter(m => m.event === 'buy' || m.event === 'sell')
+                .filter(m => (m.event === 'buy' || m.event === 'sell') && candleTimeSet.has(m.date))
                 .map(m => ({
                     time: m.date,
                     position: m.event === 'buy' ? 'belowBar' : 'aboveBar',
@@ -3377,14 +3388,14 @@
 
             // Dots at exact prices — buy/sell only
             const buySell = [...activeMarkers]
-                .filter(m => m.event === 'buy' || m.event === 'sell')
+                .filter(m => (m.event === 'buy' || m.event === 'sell') && candleTimeSet.has(m.date))
                 .sort((a, b) => a.date.localeCompare(b.date));
             const dotData = buySell.map(m => ({ time: m.date, value: m.price }));
 
             const outlineMarkers = buySell.map(m => ({
                 time: m.date, position: 'inBar', color: '#000000', shape: 'circle', size: 0.8, text: '',
             }));
-            markerOutlineSeries.setData(dotData);
+            markerOutlineSeries.setData(padToCandles(dotData));
             markerOutlineSeries.setMarkers(outlineMarkers);
 
             const dotMarkers = buySell.map(m => ({
@@ -3392,7 +3403,7 @@
                 color: m.event === 'buy' ? BUY_COLOR : SELL_COLOR,
                 shape: 'circle', size: 0.5, text: '',
             }));
-            markerDotSeries.setData(dotData);
+            markerDotSeries.setData(padToCandles(dotData));
             markerDotSeries.setMarkers(dotMarkers);
 
             // Lowest-day dots — yellow circle with black border at candle close price
@@ -3407,12 +3418,12 @@
             const lowestOutlineMarkers = lowestDotData.map(d => ({
                 time: d.time, position: 'inBar', color: '#000000', shape: 'circle', size: 0.8, text: '',
             }));
-            lowestDayOutlineSeries.setData(lowestDotData);
+            lowestDayOutlineSeries.setData(padToCandles(lowestDotData));
             lowestDayOutlineSeries.setMarkers(lowestOutlineMarkers);
             const lowestDotMarkers = lowestDotData.map(d => ({
                 time: d.time, position: 'inBar', color: '#FFD600', shape: 'circle', size: 0.5, text: '',
             }));
-            lowestDayDotSeries.setData(lowestDotData);
+            lowestDayDotSeries.setData(padToCandles(lowestDotData));
             lowestDayDotSeries.setMarkers(lowestDotMarkers);
 
             // Pattern markers — real SVG triangles via overlay
