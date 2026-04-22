@@ -1853,18 +1853,25 @@
             stByTime = {};
             if (data.supertrend) data.supertrend.forEach(s => { stByTime[s.time] = s.value; });;
 
+            const candleTimes = data.candles.map(c => c.time);
+            const alignToCandles = (arr) => {
+                const by = {};
+                for (const d of arr) by[d.time] = d;
+                return candleTimes.map(t => by[t] || { time: t });
+            };
+
             candleSeries.setData(data.candles);
             recomputeBuiltInMAs();
-            supertrendSeries.setData(data.supertrend);
+            supertrendSeries.setData(alignToCandles(data.supertrend));
 
-            volumeSeries.setData(data.volume);
-            volMaSeries.setData(data.vol_ma14 || []);
+            volumeSeries.setData(alignToCandles(data.volume));
+            volMaSeries.setData(alignToCandles(data.vol_ma14 || []));
 
-            rsiSeries.setData(data.rsi);
-            rsiEma3Series.setData(data.rsi_ema3 || []);
-            rsiBandSeries.setData(data.rsi.map(d => ({ time: d.time, value: 70 })));
-            cmfSeries.setData(data.cmf || []);
-            cmfSignalSeries.setData(data.cmf_signal || []);
+            rsiSeries.setData(alignToCandles(data.rsi));
+            rsiEma3Series.setData(alignToCandles(data.rsi_ema3 || []));
+            rsiBandSeries.setData(candleTimes.map(t => ({ time: t, value: 70 })));
+            cmfSeries.setData(alignToCandles(data.cmf || []));
+            cmfSignalSeries.setData(alignToCandles(data.cmf_signal || []));
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
