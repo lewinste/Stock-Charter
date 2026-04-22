@@ -470,6 +470,11 @@
             border-top: 1px solid var(--border);
         }
 
+        #atr-chart {
+            height: 110px;
+            border-top: 1px solid var(--border);
+        }
+
         /* Volume legend value (inline in ind-legend) */
         #volLegend:empty { display: none; }
 
@@ -1100,6 +1105,16 @@
                         <button class="ind-toggle on" data-ind="cmf" id="indToggleCmf"></button>
                     </div>
                 </div>
+                <div class="ind-dropdown-item" data-ind="atr">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#ab47bc"></span>
+                        <span class="ind-dropdown-name">ATR</span>
+                        <span class="ind-dropdown-param" id="indParamAtr">(14)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-toggle on" data-ind="atr" id="indToggleAtr"></button>
+                    </div>
+                </div>
                 <div id="customIndicatorsList"></div>
                 <div class="ind-dropdown-sep"></div>
                 <div style="position:relative">
@@ -1238,6 +1253,18 @@
             </div>
             <div id="cmf-chart"></div>
         </div>
+        <div id="atr-chart-container" style="position:relative">
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="atrLegendRow" data-ind="atr">
+                    <span class="ind-name" id="atrLegendName" style="color:#ab47bc">ATR (14)</span>
+                    <button class="ind-btn eye-btn" data-ind="atr" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <span class="ind-val" id="atrLegendVal" style="color:#ab47bc"></span>
+                </div>
+            </div>
+            <div id="atr-chart"></div>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -1304,7 +1331,7 @@
         const state = {
             ticker: 'SPY',
             period: '6mo',
-            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true },
+            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true },
             params: {
                 ma20:  { period: 20,  color: '#00bcd4', lineWidth: 1,   lineStyle: 0 },
                 ma50:  { period: 50,  color: '#ff9800', lineWidth: 2,   lineStyle: 0 },
@@ -1312,6 +1339,7 @@
                 supertrend: { period: 20, multiplier: 3.0, lineWidth: 2, lineStyle: 0 },
                 rsi: { period: 14, color: '#7e57c2', lineWidth: 1.5, lineStyle: 0 },
                 cmf: { period: 20, color: '#00897b', lineWidth: 1.5, lineStyle: 0 },
+                atr: { period: 14, color: '#ab47bc', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -1381,6 +1409,28 @@
             autoSize: true,
         });
 
+        const atrEl = document.getElementById('atr-chart');
+        const atrChart = LightweightCharts.createChart(atrEl, {
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#6b7280',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: '#f5f5f7' },
+                horzLines: { visible: false, color: 'transparent' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+                horzLine: { visible: false },
+            },
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70, scaleMargins: { top: 0.1, bottom: 0.1 } },
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
+            autoSize: true,
+        });
+
         const cmfEl = document.getElementById('cmf-chart');
         const cmfChart = LightweightCharts.createChart(cmfEl, {
             layout: {
@@ -1413,10 +1463,11 @@
                 isSyncing = false;
             });
         }
-        syncRange(mainChart, [volumeChart, rsiChart, cmfChart]);
-        syncRange(volumeChart, [mainChart, rsiChart, cmfChart]);
-        syncRange(rsiChart, [mainChart, volumeChart, cmfChart]);
-        syncRange(cmfChart, [mainChart, volumeChart, rsiChart]);
+        syncRange(mainChart, [volumeChart, rsiChart, cmfChart, atrChart]);
+        syncRange(volumeChart, [mainChart, rsiChart, cmfChart, atrChart]);
+        syncRange(rsiChart, [mainChart, volumeChart, cmfChart, atrChart]);
+        syncRange(cmfChart, [mainChart, volumeChart, rsiChart, atrChart]);
+        syncRange(atrChart, [mainChart, volumeChart, rsiChart, cmfChart]);
 
         // ----- Series on main chart (candles + indicators only) -----
         const candleSeries = mainChart.addCandlestickSeries({
@@ -1555,6 +1606,15 @@
         // CMF zero line
         cmfSeries.createPriceLine({ price: 0, color: 'rgba(0,137,123,0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
 
+        // ----- Series on ATR chart -----
+        const atrSeries = atrChart.addLineSeries({
+            color: '#ab47bc', lineWidth: 1.5,
+            priceLineVisible: false,
+            lastValueVisible: false,
+            crosshairMarkerVisible: false,
+            baseLineVisible: false,
+        });
+
         // Store candle data for crosshair legend
         let currentCandles = [];
         let currentVolume = [];
@@ -1565,6 +1625,7 @@
         let cmfByTime = {};
         let cmfSignalByTime = {};
         let stByTime = {};
+        let atrByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1629,6 +1690,7 @@
         const rsiLegendVal = document.getElementById('rsiLegendVal');
         const rsiEma3LegendVal = document.getElementById('rsiEma3LegendVal');
         const cmfLegendVal = document.getElementById('cmfLegendVal');
+        const atrLegendVal = document.getElementById('atrLegendVal');
 
         function updateIndLegendValues(param) {
             if (param && param.seriesData) {
@@ -1661,6 +1723,11 @@
             if (sigEl) sigEl.textContent = sig != null ? sig.toFixed(4) : '';
         }
 
+        function updateAtrLegendValue(time) {
+            const v = atrByTime[time];
+            atrLegendVal.textContent = v != null ? v.toFixed(2) : '';
+        }
+
         function showLastIndValues() {
             // Show last known values when crosshair leaves
             ma20LegendVal.textContent = '';
@@ -1670,6 +1737,7 @@
             rsiLegendVal.textContent = '';
             rsiEma3LegendVal.textContent = '';
             cmfLegendVal.textContent = '';
+            atrLegendVal.textContent = '';
             const sigEl = document.getElementById('cmfSignalLegendVal');
             if (sigEl) sigEl.textContent = '';
             if (typeof updateCustomIndLegendValues === 'function') updateCustomIndLegendValues(null);
@@ -1697,6 +1765,7 @@
                 { chart: mainChart, series: candleSeries },
                 { chart: rsiChart, series: rsiSeries },
                 { chart: cmfChart, series: cmfSeries },
+                { chart: atrChart, series: atrSeries },
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(volumeSeries)) {
                 if (currentVolume.length > 0) {
@@ -1706,6 +1775,7 @@
                 rsiLegendVal.textContent = '';
                 rsiEma3LegendVal.textContent = '';
                 cmfLegendVal.textContent = '';
+                atrLegendVal.textContent = '';
                 return;
             }
             const bar = param.seriesData.get(volumeSeries);
@@ -1715,6 +1785,7 @@
             const rsiE3 = rsiEma3ByTime[param.time];
             rsiEma3LegendVal.textContent = rsiE3 != null ? rsiE3.toFixed(2) : '';
             updateCmfLegendValue(param.time);
+            updateAtrLegendValue(param.time);
         });
 
         // RSI crosshair hover
@@ -1723,18 +1794,21 @@
                 { chart: mainChart, series: candleSeries },
                 { chart: volumeChart, series: volumeSeries },
                 { chart: cmfChart, series: cmfSeries },
+                { chart: atrChart, series: atrSeries },
             ]);
             updateRsiLegendValue(param);
             if (param.time) {
                 const vol = volumeByTime[param.time];
                 if (vol != null) updateVolLegend(vol, param.time);
                 updateCmfLegendValue(param.time);
+                updateAtrLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
                     updateVolLegend(lastV.value, lastV.time);
                 }
                 cmfLegendVal.textContent = '';
+                atrLegendVal.textContent = '';
             }
         });
 
@@ -1744,6 +1818,7 @@
                 { chart: mainChart, series: candleSeries },
                 { chart: volumeChart, series: volumeSeries },
                 { chart: rsiChart, series: rsiSeries },
+                { chart: atrChart, series: atrSeries },
             ]);
             if (param.time) {
                 const vol = volumeByTime[param.time];
@@ -1753,6 +1828,7 @@
                 const rsiE3c = rsiEma3ByTime[param.time];
                 rsiEma3LegendVal.textContent = rsiE3c != null ? rsiE3c.toFixed(2) : '';
                 updateCmfLegendValue(param.time);
+                updateAtrLegendValue(param.time);
             } else {
                 if (currentVolume.length > 0) {
                     const lastV = currentVolume[currentVolume.length - 1];
@@ -1761,6 +1837,36 @@
                 rsiLegendVal.textContent = '';
                 rsiEma3LegendVal.textContent = '';
                 cmfLegendVal.textContent = '';
+                atrLegendVal.textContent = '';
+            }
+        });
+
+        // ATR crosshair hover
+        atrChart.subscribeCrosshairMove(param => {
+            syncCrosshairFromSource(atrChart, param, [
+                { chart: mainChart, series: candleSeries },
+                { chart: volumeChart, series: volumeSeries },
+                { chart: rsiChart, series: rsiSeries },
+                { chart: cmfChart, series: cmfSeries },
+            ]);
+            if (param.time) {
+                const vol = volumeByTime[param.time];
+                if (vol != null) updateVolLegend(vol, param.time);
+                const rsi = rsiByTime[param.time];
+                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+                const rsiE3a = rsiEma3ByTime[param.time];
+                rsiEma3LegendVal.textContent = rsiE3a != null ? rsiE3a.toFixed(2) : '';
+                updateCmfLegendValue(param.time);
+                updateAtrLegendValue(param.time);
+            } else {
+                if (currentVolume.length > 0) {
+                    const lastV = currentVolume[currentVolume.length - 1];
+                    updateVolLegend(lastV.value, lastV.time);
+                }
+                rsiLegendVal.textContent = '';
+                rsiEma3LegendVal.textContent = '';
+                cmfLegendVal.textContent = '';
+                atrLegendVal.textContent = '';
             }
         });
 
@@ -1770,6 +1876,7 @@
                 { chart: volumeChart, series: volumeSeries },
                 { chart: rsiChart, series: rsiSeries },
                 { chart: cmfChart, series: cmfSeries },
+                { chart: atrChart, series: atrSeries },
             ]);
             if (!param.time || !param.seriesData || !param.seriesData.has(candleSeries)) {
                 if (currentCandles.length > 0) {
@@ -1793,6 +1900,7 @@
             const rsiE3m = rsiEma3ByTime[param.time];
             rsiEma3LegendVal.textContent = rsiE3m != null ? rsiE3m.toFixed(2) : '';
             updateCmfLegendValue(param.time);
+            updateAtrLegendValue(param.time);
         });
 
         // ----- Ticker header update -----
@@ -1852,6 +1960,8 @@
             if (data.cmf_signal) data.cmf_signal.forEach(c => { cmfSignalByTime[c.time] = c.value; });
             stByTime = {};
             if (data.supertrend) data.supertrend.forEach(s => { stByTime[s.time] = s.value; });;
+            atrByTime = {};
+            if (data.atr) data.atr.forEach(a => { atrByTime[a.time] = a.value; });
 
             const candleTimes = data.candles.map(c => c.time);
             const alignToCandles = (arr) => {
@@ -1872,6 +1982,7 @@
             rsiBandSeries.setData(candleTimes.map(t => ({ time: t, value: 70 })));
             cmfSeries.setData(alignToCandles(data.cmf || []));
             cmfSignalSeries.setData(alignToCandles(data.cmf_signal || []));
+            atrSeries.setData(alignToCandles(data.atr || []));
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
@@ -1904,6 +2015,8 @@
                 mainChart.timeScale().fitContent();
                 volumeChart.timeScale().fitContent();
                 rsiChart.timeScale().fitContent();
+                cmfChart.timeScale().fitContent();
+                atrChart.timeScale().fitContent();
             }
             applyVisibility();
         }
@@ -1913,7 +2026,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -1937,7 +2050,7 @@
             try {
                 const p = state.params;
                 const res = await fetch(
-                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}`
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}`
                 );
                 if (!res.ok) return;
                 const data = await res.json();
@@ -1982,10 +2095,14 @@
             const cmfVisible = state.indicators.cmf;
             document.getElementById('cmf-chart-container').style.display = cmfVisible ? 'block' : 'none';
 
+            const atrVisible = state.indicators.atr;
+            document.getElementById('atr-chart-container').style.display = atrVisible ? 'block' : 'none';
+
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             if (rsiVisible) rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
             if (cmfVisible) cmfChart.resize(cmfEl.clientWidth, cmfEl.clientHeight);
+            if (atrVisible) atrChart.resize(atrEl.clientWidth, atrEl.clientHeight);
         }
 
         // ----- UI helpers -----
@@ -2219,7 +2336,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf' };
+            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -2609,6 +2726,7 @@
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
             cmfChart.resize(cmfEl.clientWidth, cmfEl.clientHeight);
+            atrChart.resize(atrEl.clientWidth, atrEl.clientHeight);
             renderPatternOverlay();
         });
 
@@ -3072,6 +3190,7 @@
                     cmf:     cmfByTime[c.time]   != null ? Math.round(cmfByTime[c.time] * 10000) / 10000 : null,
                     cmf_sig: cmfSignalByTime[c.time] != null ? Math.round(cmfSignalByTime[c.time] * 10000) / 10000 : null,
                     st:      stByTime[c.time]    != null ? Math.round(stByTime[c.time] * 100) / 100 : null,
+                    atr:     atrByTime[c.time]   != null ? Math.round(atrByTime[c.time] * 100) / 100 : null,
                 };
                 return row;
             });
