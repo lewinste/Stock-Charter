@@ -188,6 +188,23 @@ def compute_cmf(highs, lows, closes, volumes, period=20):
     return cmf
 
 
+def compute_macd(closes, fast=12, slow=26, signal=9):
+    """Compute MACD line, signal line, and histogram from close prices."""
+    n = len(closes)
+    fast_ema = compute_ema_from_values(closes, fast)
+    slow_ema = compute_ema_from_values(closes, slow)
+    macd = [None] * n
+    for i in range(n):
+        if fast_ema[i] is not None and slow_ema[i] is not None:
+            macd[i] = fast_ema[i] - slow_ema[i]
+    sig = compute_ema_from_values(macd, signal)
+    hist = [None] * n
+    for i in range(n):
+        if macd[i] is not None and sig[i] is not None:
+            hist[i] = macd[i] - sig[i]
+    return macd, sig, hist
+
+
 def compute_ema_from_values(values, period=3):
     """Compute EMA of a list that may contain Nones."""
     n = len(values)
@@ -226,6 +243,9 @@ class handler(BaseHTTPRequestHandler):
         st_mult = float(params.get("st_mult", [3.0])[0])
         cmf_period = int(params.get("cmf_period", [20])[0])
         atr_period = int(params.get("atr_period", [14])[0])
+        macd_fast = int(params.get("macd_fast", [12])[0])
+        macd_slow = int(params.get("macd_slow", [26])[0])
+        macd_signal = int(params.get("macd_signal", [9])[0])
 
         if period not in PERIOD_DAYS:
             period = "1y"
@@ -276,6 +296,7 @@ class handler(BaseHTTPRequestHandler):
         rsi = compute_rsi(closes, rsi_period)
         rsi_ema3 = compute_ema_from_values(rsi, 3)
         atr = compute_atr(highs, lows, closes, atr_period)
+        macd_line, macd_sig, macd_hist = compute_macd(closes, macd_fast, macd_slow, macd_signal)
         supertrend, st_dir = compute_supertrend(highs, lows, closes, st_period, st_mult)
         ma_vals = compute_ma(closes, ma_period)
         vol_ma14 = compute_ma(volumes, 14)
@@ -289,6 +310,9 @@ class handler(BaseHTTPRequestHandler):
         rsi_data = []
         rsi_ema3_data = []
         atr_data = []
+        macd_data = []
+        macd_signal_data = []
+        macd_hist_data = []
         supertrend_data = []
         ma_data = []
         cmf_data = []
@@ -318,6 +342,15 @@ class handler(BaseHTTPRequestHandler):
             if atr[i] is not None:
                 atr_data.append({"time": t, "value": round(atr[i], 4)})
 
+            if macd_line[i] is not None:
+                macd_data.append({"time": t, "value": round(macd_line[i], 4)})
+            if macd_sig[i] is not None:
+                macd_signal_data.append({"time": t, "value": round(macd_sig[i], 4)})
+            if macd_hist[i] is not None:
+                h = round(macd_hist[i], 4)
+                color = "rgba(38,166,154,0.6)" if h >= 0 else "rgba(239,83,80,0.6)"
+                macd_hist_data.append({"time": t, "value": h, "color": color})
+
             if supertrend[i] is not None:
                 st_val = round(supertrend[i], 2)
                 st_color = "#26a69a" if st_dir[i] == 1 else "#ef5350"
@@ -342,6 +375,9 @@ class handler(BaseHTTPRequestHandler):
             "rsi": rsi_data,
             "rsi_ema3": rsi_ema3_data,
             "atr": atr_data,
+            "macd": macd_data,
+            "macd_signal": macd_signal_data,
+            "macd_hist": macd_hist_data,
             "supertrend": supertrend_data,
             "ma": ma_data,
             "cmf": cmf_data,
