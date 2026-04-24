@@ -485,6 +485,37 @@
             border-top: 1px solid var(--border);
         }
 
+        #tmf-chart {
+            height: 120px;
+            border-top: 1px solid var(--border);
+        }
+
+        #vmacd-chart {
+            height: 120px;
+            border-top: 1px solid var(--border);
+        }
+
+        #mfi-chart {
+            height: 120px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* Draggable resize handle sits on top of the 1px border between panes */
+        .pane-resize-handle {
+            position: absolute;
+            top: -3px;
+            left: 0;
+            right: 0;
+            height: 7px;
+            cursor: ns-resize;
+            z-index: 30;
+            background: transparent;
+        }
+        .pane-resize-handle:hover,
+        .pane-resize-handle.dragging {
+            background: rgba(41, 98, 255, 0.18);
+        }
+
         /* Volume legend value (inline in ind-legend) */
         #volLegend:empty { display: none; }
 
@@ -1145,6 +1176,36 @@
                         <button class="ind-toggle on" data-ind="macdv" id="indToggleMacdv"></button>
                     </div>
                 </div>
+                <div class="ind-dropdown-item" data-ind="tmf">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#26a69a"></span>
+                        <span class="ind-dropdown-name">TMF</span>
+                        <span class="ind-dropdown-param" id="indParamTmf">(21)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-toggle on" data-ind="tmf" id="indToggleTmf"></button>
+                    </div>
+                </div>
+                <div class="ind-dropdown-item" data-ind="vmacd">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#5c6bc0"></span>
+                        <span class="ind-dropdown-name">VMACD</span>
+                        <span class="ind-dropdown-param" id="indParamVmacd">(12,26,9)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-toggle on" data-ind="vmacd" id="indToggleVmacd"></button>
+                    </div>
+                </div>
+                <div class="ind-dropdown-item" data-ind="mfi">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#ec407a"></span>
+                        <span class="ind-dropdown-name">MFI</span>
+                        <span class="ind-dropdown-param" id="indParamMfi">(14)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-toggle on" data-ind="mfi" id="indToggleMfi"></button>
+                    </div>
+                </div>
                 <div id="customIndicatorsList"></div>
                 <div class="ind-dropdown-sep"></div>
                 <div style="position:relative">
@@ -1241,6 +1302,7 @@
         <span class="watermark">StockPulse</span>
 
         <div id="volume-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="volume-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row">
                     <span class="ind-name" style="color:var(--text-secondary)">Vol</span>
@@ -1251,6 +1313,7 @@
         </div>
 
         <div id="rsi-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="rsi-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row" id="rsiLegendRow" data-ind="rsi">
                     <span class="ind-name" id="rsiLegendName" style="color:var(--purple)">RSI (14)</span>
@@ -1267,6 +1330,7 @@
             <div id="rsi-chart"></div>
         </div>
         <div id="cmf-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="cmf-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row" id="cmfLegendRow" data-ind="cmf">
                     <span class="ind-name" id="cmfLegendName" style="color:#00897b">CMF (20)</span>
@@ -1284,6 +1348,7 @@
             <div id="cmf-chart"></div>
         </div>
         <div id="atr-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="atr-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row" id="atrLegendRow" data-ind="atr">
                     <span class="ind-name" id="atrLegendName" style="color:#ab47bc">ATR (14)</span>
@@ -1296,6 +1361,7 @@
             <div id="atr-chart"></div>
         </div>
         <div id="macd-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="macd-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row" id="macdLegendRow" data-ind="macd">
                     <span class="ind-name" id="macdLegendName" style="color:#2962ff">MACD (12,26,9)</span>
@@ -1312,6 +1378,7 @@
             <div id="macd-chart"></div>
         </div>
         <div id="macdv-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="macdv-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row" id="macdvLegendRow" data-ind="macdv">
                     <span class="ind-name" id="macdvLegendName" style="color:#d81b60">MACD-V (12,26,9,ATR26)</span>
@@ -1326,6 +1393,51 @@
                 </div>
             </div>
             <div id="macdv-chart"></div>
+        </div>
+        <div id="tmf-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="tmf-chart" title="Drag to resize pane"></div>
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="tmfLegendRow" data-ind="tmf">
+                    <span class="ind-name" id="tmfLegendName" style="color:#26a69a">TMF (21)</span>
+                    <button class="ind-btn eye-btn" data-ind="tmf" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <span class="ind-val" id="tmfLegendVal" style="color:#26a69a"></span>
+                    <span class="ind-name" style="color:#ff6d00;margin-left:6px">Sig</span>
+                    <span class="ind-val" id="tmfSignalLegendVal" style="color:#ff6d00"></span>
+                </div>
+            </div>
+            <div id="tmf-chart"></div>
+        </div>
+        <div id="vmacd-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="vmacd-chart" title="Drag to resize pane"></div>
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="vmacdLegendRow" data-ind="vmacd">
+                    <span class="ind-name" id="vmacdLegendName" style="color:#5c6bc0">VMACD (12,26,9)</span>
+                    <button class="ind-btn eye-btn" data-ind="vmacd" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <span class="ind-val" id="vmacdLegendVal" style="color:#5c6bc0"></span>
+                    <span class="ind-name" style="color:#ff6d00;margin-left:6px">Sig</span>
+                    <span class="ind-val" id="vmacdSignalLegendVal" style="color:#ff6d00"></span>
+                </div>
+            </div>
+            <div id="vmacd-chart"></div>
+        </div>
+        <div id="mfi-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="mfi-chart" title="Drag to resize pane"></div>
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="mfiLegendRow" data-ind="mfi">
+                    <span class="ind-name" id="mfiLegendName" style="color:#ec407a">MFI (14)</span>
+                    <button class="ind-btn eye-btn" data-ind="mfi" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <span class="ind-val" id="mfiLegendVal" style="color:#ec407a"></span>
+                    <span class="ind-name" style="color:#ff6d00;margin-left:6px">Sig</span>
+                    <span class="ind-val" id="mfiSignalLegendVal" style="color:#ff6d00"></span>
+                </div>
+            </div>
+            <div id="mfi-chart"></div>
         </div>
     </div>
 
@@ -1393,7 +1505,7 @@
         const state = {
             ticker: 'SPY',
             period: '6mo',
-            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true },
+            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true, tmf: true, vmacd: true, mfi: true },
             params: {
                 ma20:  { period: 20,  color: '#00bcd4', lineWidth: 1,   lineStyle: 0 },
                 ma50:  { period: 50,  color: '#ff9800', lineWidth: 2,   lineStyle: 0 },
@@ -1404,6 +1516,9 @@
                 atr: { period: 14, color: '#ab47bc', lineWidth: 1.5, lineStyle: 0 },
                 macd: { fast: 12, slow: 26, signal: 9, color: '#2962ff', lineWidth: 1.5, lineStyle: 0 },
                 macdv: { fast: 12, slow: 26, signal: 9, atr: 26, color: '#d81b60', lineWidth: 1.5, lineStyle: 0 },
+                tmf:   { period: 21, signal: 9, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
+                vmacd: { fast: 12, slow: 26, signal: 9, color: '#5c6bc0', lineWidth: 1.5, lineStyle: 0 },
+                mfi:   { period: 14, signal: 9, color: '#ec407a', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -1472,6 +1587,36 @@
             timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
             autoSize: true,
         });
+
+        const subPaneOpts = {
+            layout: {
+                background: { color: '#ffffff' },
+                textColor: '#6b7280',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: 11,
+            },
+            grid: {
+                vertLines: { color: '#f5f5f7' },
+                horzLines: { visible: false, color: 'transparent' },
+            },
+            crosshair: {
+                mode: LightweightCharts.CrosshairMode.Normal,
+                vertLine: { color: '#c8ccd4', width: 1, style: LightweightCharts.LineStyle.Dashed, labelBackgroundColor: '#2962ff' },
+                horzLine: { visible: false },
+            },
+            rightPriceScale: { borderColor: '#e1e4e8', minimumWidth: 70, scaleMargins: { top: 0.1, bottom: 0.1 } },
+            timeScale: { borderColor: '#e1e4e8', timeVisible: false, visible: false },
+            autoSize: true,
+        };
+
+        const tmfEl = document.getElementById('tmf-chart');
+        const tmfChart = LightweightCharts.createChart(tmfEl, subPaneOpts);
+
+        const vmacdEl = document.getElementById('vmacd-chart');
+        const vmacdChart = LightweightCharts.createChart(vmacdEl, subPaneOpts);
+
+        const mfiEl = document.getElementById('mfi-chart');
+        const mfiChart = LightweightCharts.createChart(mfiEl, subPaneOpts);
 
         const macdvEl = document.getElementById('macdv-chart');
         const macdvChart = LightweightCharts.createChart(macdvEl, {
@@ -1571,13 +1716,8 @@
                 isSyncing = false;
             });
         }
-        syncRange(mainChart, [volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart]);
-        syncRange(volumeChart, [mainChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart]);
-        syncRange(rsiChart, [mainChart, volumeChart, cmfChart, atrChart, macdChart, macdvChart]);
-        syncRange(cmfChart, [mainChart, volumeChart, rsiChart, atrChart, macdChart, macdvChart]);
-        syncRange(atrChart, [mainChart, volumeChart, rsiChart, cmfChart, macdChart, macdvChart]);
-        syncRange(macdChart, [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdvChart]);
-        syncRange(macdvChart, [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart]);
+        const _allCharts = () => [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart, tmfChart, vmacdChart, mfiChart];
+        _allCharts().forEach(src => syncRange(src, _allCharts().filter(c => c !== src)));
 
         // ----- Series on main chart (candles + indicators only) -----
         const candleSeries = mainChart.addCandlestickSeries({
@@ -1761,6 +1901,44 @@
             lineStyle: LightweightCharts.LineStyle.Dashed,
             priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
         });
+        // ----- Series on TMF chart -----
+        const tmfSeries = tmfChart.addLineSeries({
+            color: '#26a69a', lineWidth: 1.5,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, baseLineVisible: false,
+        });
+        const tmfSignalSeries = tmfChart.addLineSeries({
+            color: '#ff6d00', lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        tmfSeries.createPriceLine({ price: 0, color: 'rgba(38,166,154,0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
+        // ----- Series on VMACD chart -----
+        const vmacdSeries = vmacdChart.addLineSeries({
+            color: '#5c6bc0', lineWidth: 1.5,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, baseLineVisible: false,
+        });
+        const vmacdSignalSeries = vmacdChart.addLineSeries({
+            color: '#ff6d00', lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        vmacdSeries.createPriceLine({ price: 0, color: 'rgba(92,107,192,0.4)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
+        // ----- Series on MFI chart -----
+        const mfiSeries = mfiChart.addLineSeries({
+            color: '#ec407a', lineWidth: 1.5,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, baseLineVisible: false,
+        });
+        const mfiSignalSeries = mfiChart.addLineSeries({
+            color: '#ff6d00', lineWidth: 1,
+            lineStyle: LightweightCharts.LineStyle.Dashed,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false,
+        });
+        mfiSeries.createPriceLine({ price: 80, color: 'rgba(236,64,122,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        mfiSeries.createPriceLine({ price: 50, color: 'rgba(180,180,180,0.5)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        mfiSeries.createPriceLine({ price: 20, color: 'rgba(236,64,122,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
         // Reference bands per Spiroglou paper
         macdvSeries.createPriceLine({ price: 150,  color: 'rgba(216,27,96,0.35)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
         macdvSeries.createPriceLine({ price: 100,  color: 'rgba(216,27,96,0.20)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false });
@@ -1787,6 +1965,12 @@
         let macdvByTime = {};
         let macdvSignalByTime = {};
         let macdvHistByTime = {};
+        let tmfByTime = {};
+        let tmfSignalByTime = {};
+        let vmacdByTime = {};
+        let vmacdSignalByTime = {};
+        let mfiByTime = {};
+        let mfiSignalByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -1858,6 +2042,12 @@
         const macdvLegendVal = document.getElementById('macdvLegendVal');
         const macdvSignalLegendVal = document.getElementById('macdvSignalLegendVal');
         const macdvHistLegendVal = document.getElementById('macdvHistLegendVal');
+        const tmfLegendVal = document.getElementById('tmfLegendVal');
+        const tmfSignalLegendVal = document.getElementById('tmfSignalLegendVal');
+        const vmacdLegendVal = document.getElementById('vmacdLegendVal');
+        const vmacdSignalLegendVal = document.getElementById('vmacdSignalLegendVal');
+        const mfiLegendVal = document.getElementById('mfiLegendVal');
+        const mfiSignalLegendVal = document.getElementById('mfiSignalLegendVal');
 
         function updateIndLegendValues(param) {
             if (param && param.seriesData) {
@@ -1913,12 +2103,46 @@
             macdvHistLegendVal.textContent = h != null ? h.toFixed(2) : '';
         }
 
-        function showLastIndValues() {
-            // Show last known values when crosshair leaves
-            ma20LegendVal.textContent = '';
-            ma50LegendVal.textContent = '';
-            ma200LegendVal.textContent = '';
-            stLegendVal.textContent = '';
+        function updateTmfLegendValue(time) {
+            const v = tmfByTime[time];
+            const s = tmfSignalByTime[time];
+            tmfLegendVal.textContent = v != null ? v.toFixed(3) : '';
+            tmfSignalLegendVal.textContent = s != null ? s.toFixed(3) : '';
+        }
+
+        function updateVmacdLegendValue(time) {
+            const v = vmacdByTime[time];
+            const s = vmacdSignalByTime[time];
+            vmacdLegendVal.textContent = v != null ? Math.round(v).toLocaleString() : '';
+            vmacdSignalLegendVal.textContent = s != null ? Math.round(s).toLocaleString() : '';
+        }
+
+        function updateMfiLegendValue(time) {
+            const v = mfiByTime[time];
+            const s = mfiSignalByTime[time];
+            mfiLegendVal.textContent = v != null ? v.toFixed(2) : '';
+            mfiSignalLegendVal.textContent = s != null ? s.toFixed(2) : '';
+        }
+
+        // Single chokepoint for sub-pane legend updates — keeps every crosshair
+        // handler in lockstep as new panes are added.
+        function updateAllSubPaneLegends(time) {
+            const vol = volumeByTime[time];
+            if (vol != null) updateVolLegend(vol, time);
+            const rsi = rsiByTime[time];
+            rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
+            const rsiE3 = rsiEma3ByTime[time];
+            rsiEma3LegendVal.textContent = rsiE3 != null ? rsiE3.toFixed(2) : '';
+            updateCmfLegendValue(time);
+            updateAtrLegendValue(time);
+            updateMacdLegendValue(time);
+            updateMacdvLegendValue(time);
+            updateTmfLegendValue(time);
+            updateVmacdLegendValue(time);
+            updateMfiLegendValue(time);
+        }
+
+        function clearAllSubPaneLegends() {
             rsiLegendVal.textContent = '';
             rsiEma3LegendVal.textContent = '';
             cmfLegendVal.textContent = '';
@@ -1929,8 +2153,23 @@
             macdvLegendVal.textContent = '';
             macdvSignalLegendVal.textContent = '';
             macdvHistLegendVal.textContent = '';
-            const sigEl = document.getElementById('cmfSignalLegendVal');
-            if (sigEl) sigEl.textContent = '';
+            tmfLegendVal.textContent = '';
+            tmfSignalLegendVal.textContent = '';
+            vmacdLegendVal.textContent = '';
+            vmacdSignalLegendVal.textContent = '';
+            mfiLegendVal.textContent = '';
+            mfiSignalLegendVal.textContent = '';
+            const cmfSigEl = document.getElementById('cmfSignalLegendVal');
+            if (cmfSigEl) cmfSigEl.textContent = '';
+        }
+
+        function showLastIndValues() {
+            // Show last known values when crosshair leaves
+            ma20LegendVal.textContent = '';
+            ma50LegendVal.textContent = '';
+            ma200LegendVal.textContent = '';
+            stLegendVal.textContent = '';
+            clearAllSubPaneLegends();
             if (typeof updateCustomIndLegendValues === 'function') updateCustomIndLegendValues(null);
         }
 
@@ -1951,244 +2190,42 @@
         }
 
         // Volume crosshair hover
-        volumeChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(volumeChart, param, [
-                { chart: mainChart, series: candleSeries },
-                { chart: rsiChart, series: rsiSeries },
-                { chart: cmfChart, series: cmfSeries },
-                { chart: atrChart, series: atrSeries },
-                { chart: macdChart, series: macdSeries },
-                { chart: macdvChart, series: macdvSeries },
-            ]);
-            if (!param.time || !param.seriesData || !param.seriesData.has(volumeSeries)) {
-                if (currentVolume.length > 0) {
-                    const lastV = currentVolume[currentVolume.length - 1];
-                    updateVolLegend(lastV.value, lastV.time);
-                }
-                rsiLegendVal.textContent = '';
-                rsiEma3LegendVal.textContent = '';
-                cmfLegendVal.textContent = '';
-                atrLegendVal.textContent = '';
-                macdLegendVal.textContent = '';
-                macdSignalLegendVal.textContent = '';
-                macdHistLegendVal.textContent = '';
-                macdvLegendVal.textContent = '';
-                macdvSignalLegendVal.textContent = '';
-                macdvHistLegendVal.textContent = '';
-                return;
-            }
-            const bar = param.seriesData.get(volumeSeries);
-            if (bar) updateVolLegend(bar.value, param.time);
-            const rsi = rsiByTime[param.time];
-            rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
-            const rsiE3 = rsiEma3ByTime[param.time];
-            rsiEma3LegendVal.textContent = rsiE3 != null ? rsiE3.toFixed(2) : '';
-            updateCmfLegendValue(param.time);
-            updateAtrLegendValue(param.time);
-            updateMacdLegendValue(param.time);
-            updateMacdvLegendValue(param.time);
-        });
+        // Sub-pane crosshair hover — table-driven so new panes plug in by
+        // listing their chart + primary series below.
+        const _subPanes = () => ([
+            { chart: volumeChart, series: volumeSeries },
+            { chart: rsiChart,    series: rsiSeries },
+            { chart: cmfChart,    series: cmfSeries },
+            { chart: atrChart,    series: atrSeries },
+            { chart: macdChart,   series: macdSeries },
+            { chart: macdvChart,  series: macdvSeries },
+            { chart: tmfChart,    series: tmfSeries },
+            { chart: vmacdChart,  series: vmacdSeries },
+            { chart: mfiChart,    series: mfiSeries },
+        ]);
 
-        // RSI crosshair hover
-        rsiChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(rsiChart, param, [
-                { chart: mainChart, series: candleSeries },
-                { chart: volumeChart, series: volumeSeries },
-                { chart: cmfChart, series: cmfSeries },
-                { chart: atrChart, series: atrSeries },
-                { chart: macdChart, series: macdSeries },
-                { chart: macdvChart, series: macdvSeries },
-            ]);
-            updateRsiLegendValue(param);
-            if (param.time) {
-                const vol = volumeByTime[param.time];
-                if (vol != null) updateVolLegend(vol, param.time);
-                updateCmfLegendValue(param.time);
-                updateAtrLegendValue(param.time);
-                updateMacdLegendValue(param.time);
-                updateMacdvLegendValue(param.time);
-            } else {
-                if (currentVolume.length > 0) {
-                    const lastV = currentVolume[currentVolume.length - 1];
-                    updateVolLegend(lastV.value, lastV.time);
+        function subscribeSubPaneHover(srcChart) {
+            srcChart.subscribeCrosshairMove(param => {
+                const targets = [{ chart: mainChart, series: candleSeries }]
+                    .concat(_subPanes().filter(p => p.chart !== srcChart));
+                syncCrosshairFromSource(srcChart, param, targets);
+                if (param.time) {
+                    updateAllSubPaneLegends(param.time);
+                    if (srcChart === rsiChart) updateRsiLegendValue(param);
+                } else {
+                    if (currentVolume.length > 0) {
+                        const lastV = currentVolume[currentVolume.length - 1];
+                        updateVolLegend(lastV.value, lastV.time);
+                    }
+                    clearAllSubPaneLegends();
                 }
-                cmfLegendVal.textContent = '';
-                atrLegendVal.textContent = '';
-                macdLegendVal.textContent = '';
-                macdSignalLegendVal.textContent = '';
-                macdHistLegendVal.textContent = '';
-                macdvLegendVal.textContent = '';
-                macdvSignalLegendVal.textContent = '';
-                macdvHistLegendVal.textContent = '';
-            }
-        });
-
-        // CMF crosshair hover
-        cmfChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(cmfChart, param, [
-                { chart: mainChart, series: candleSeries },
-                { chart: volumeChart, series: volumeSeries },
-                { chart: rsiChart, series: rsiSeries },
-                { chart: atrChart, series: atrSeries },
-                { chart: macdChart, series: macdSeries },
-                { chart: macdvChart, series: macdvSeries },
-            ]);
-            if (param.time) {
-                const vol = volumeByTime[param.time];
-                if (vol != null) updateVolLegend(vol, param.time);
-                const rsi = rsiByTime[param.time];
-                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
-                const rsiE3c = rsiEma3ByTime[param.time];
-                rsiEma3LegendVal.textContent = rsiE3c != null ? rsiE3c.toFixed(2) : '';
-                updateCmfLegendValue(param.time);
-                updateAtrLegendValue(param.time);
-                updateMacdLegendValue(param.time);
-                updateMacdvLegendValue(param.time);
-            } else {
-                if (currentVolume.length > 0) {
-                    const lastV = currentVolume[currentVolume.length - 1];
-                    updateVolLegend(lastV.value, lastV.time);
-                }
-                rsiLegendVal.textContent = '';
-                rsiEma3LegendVal.textContent = '';
-                cmfLegendVal.textContent = '';
-                atrLegendVal.textContent = '';
-                macdLegendVal.textContent = '';
-                macdSignalLegendVal.textContent = '';
-                macdHistLegendVal.textContent = '';
-                macdvLegendVal.textContent = '';
-                macdvSignalLegendVal.textContent = '';
-                macdvHistLegendVal.textContent = '';
-            }
-        });
-
-        // ATR crosshair hover
-        atrChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(atrChart, param, [
-                { chart: mainChart, series: candleSeries },
-                { chart: volumeChart, series: volumeSeries },
-                { chart: rsiChart, series: rsiSeries },
-                { chart: cmfChart, series: cmfSeries },
-                { chart: macdChart, series: macdSeries },
-                { chart: macdvChart, series: macdvSeries },
-            ]);
-            if (param.time) {
-                const vol = volumeByTime[param.time];
-                if (vol != null) updateVolLegend(vol, param.time);
-                const rsi = rsiByTime[param.time];
-                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
-                const rsiE3a = rsiEma3ByTime[param.time];
-                rsiEma3LegendVal.textContent = rsiE3a != null ? rsiE3a.toFixed(2) : '';
-                updateCmfLegendValue(param.time);
-                updateAtrLegendValue(param.time);
-                updateMacdLegendValue(param.time);
-                updateMacdvLegendValue(param.time);
-            } else {
-                if (currentVolume.length > 0) {
-                    const lastV = currentVolume[currentVolume.length - 1];
-                    updateVolLegend(lastV.value, lastV.time);
-                }
-                rsiLegendVal.textContent = '';
-                rsiEma3LegendVal.textContent = '';
-                cmfLegendVal.textContent = '';
-                atrLegendVal.textContent = '';
-                macdLegendVal.textContent = '';
-                macdSignalLegendVal.textContent = '';
-                macdHistLegendVal.textContent = '';
-                macdvLegendVal.textContent = '';
-                macdvSignalLegendVal.textContent = '';
-                macdvHistLegendVal.textContent = '';
-            }
-        });
-
-        // MACD crosshair hover
-        macdChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(macdChart, param, [
-                { chart: mainChart, series: candleSeries },
-                { chart: volumeChart, series: volumeSeries },
-                { chart: rsiChart, series: rsiSeries },
-                { chart: cmfChart, series: cmfSeries },
-                { chart: atrChart, series: atrSeries },
-                { chart: macdvChart, series: macdvSeries },
-            ]);
-            if (param.time) {
-                const vol = volumeByTime[param.time];
-                if (vol != null) updateVolLegend(vol, param.time);
-                const rsi = rsiByTime[param.time];
-                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
-                const rsiE3m2 = rsiEma3ByTime[param.time];
-                rsiEma3LegendVal.textContent = rsiE3m2 != null ? rsiE3m2.toFixed(2) : '';
-                updateCmfLegendValue(param.time);
-                updateAtrLegendValue(param.time);
-                updateMacdLegendValue(param.time);
-                updateMacdvLegendValue(param.time);
-            } else {
-                if (currentVolume.length > 0) {
-                    const lastV = currentVolume[currentVolume.length - 1];
-                    updateVolLegend(lastV.value, lastV.time);
-                }
-                rsiLegendVal.textContent = '';
-                rsiEma3LegendVal.textContent = '';
-                cmfLegendVal.textContent = '';
-                atrLegendVal.textContent = '';
-                macdLegendVal.textContent = '';
-                macdSignalLegendVal.textContent = '';
-                macdHistLegendVal.textContent = '';
-                macdvLegendVal.textContent = '';
-                macdvSignalLegendVal.textContent = '';
-                macdvHistLegendVal.textContent = '';
-            }
-        });
-
-        // MACD-V crosshair hover
-        macdvChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(macdvChart, param, [
-                { chart: mainChart, series: candleSeries },
-                { chart: volumeChart, series: volumeSeries },
-                { chart: rsiChart, series: rsiSeries },
-                { chart: cmfChart, series: cmfSeries },
-                { chart: atrChart, series: atrSeries },
-                { chart: macdChart, series: macdSeries },
-            ]);
-            if (param.time) {
-                const vol = volumeByTime[param.time];
-                if (vol != null) updateVolLegend(vol, param.time);
-                const rsi = rsiByTime[param.time];
-                rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
-                const rsiE3mv = rsiEma3ByTime[param.time];
-                rsiEma3LegendVal.textContent = rsiE3mv != null ? rsiE3mv.toFixed(2) : '';
-                updateCmfLegendValue(param.time);
-                updateAtrLegendValue(param.time);
-                updateMacdLegendValue(param.time);
-                updateMacdvLegendValue(param.time);
-            } else {
-                if (currentVolume.length > 0) {
-                    const lastV = currentVolume[currentVolume.length - 1];
-                    updateVolLegend(lastV.value, lastV.time);
-                }
-                rsiLegendVal.textContent = '';
-                rsiEma3LegendVal.textContent = '';
-                cmfLegendVal.textContent = '';
-                atrLegendVal.textContent = '';
-                macdLegendVal.textContent = '';
-                macdSignalLegendVal.textContent = '';
-                macdHistLegendVal.textContent = '';
-                macdvLegendVal.textContent = '';
-                macdvSignalLegendVal.textContent = '';
-                macdvHistLegendVal.textContent = '';
-            }
-        });
+            });
+        }
+        _subPanes().forEach(p => subscribeSubPaneHover(p.chart));
 
         // Main chart crosshair hover for OHLC + volume + indicator values
         mainChart.subscribeCrosshairMove(param => {
-            syncCrosshairFromSource(mainChart, param, [
-                { chart: volumeChart, series: volumeSeries },
-                { chart: rsiChart, series: rsiSeries },
-                { chart: cmfChart, series: cmfSeries },
-                { chart: atrChart, series: atrSeries },
-                { chart: macdChart, series: macdSeries },
-                { chart: macdvChart, series: macdvSeries },
-            ]);
+            syncCrosshairFromSource(mainChart, param, _subPanes());
             if (!param.time || !param.seriesData || !param.seriesData.has(candleSeries)) {
                 if (currentCandles.length > 0) {
                     updateOhlcLegend(currentCandles[currentCandles.length - 1]);
@@ -2206,14 +2243,7 @@
             if (vol != null) updateVolLegend(vol, param.time);
             updateIndLegendValues(param);
             updateCustomIndLegendValues(param);
-            const rsi = rsiByTime[param.time];
-            rsiLegendVal.textContent = rsi != null ? rsi.toFixed(2) : '';
-            const rsiE3m = rsiEma3ByTime[param.time];
-            rsiEma3LegendVal.textContent = rsiE3m != null ? rsiE3m.toFixed(2) : '';
-            updateCmfLegendValue(param.time);
-            updateAtrLegendValue(param.time);
-            updateMacdLegendValue(param.time);
-            updateMacdvLegendValue(param.time);
+            updateAllSubPaneLegends(param.time);
         });
 
         // ----- Ticker header update -----
@@ -2287,6 +2317,18 @@
             if (data.macdv_signal) data.macdv_signal.forEach(m => { macdvSignalByTime[m.time] = m.value; });
             macdvHistByTime = {};
             if (data.macdv_hist) data.macdv_hist.forEach(m => { macdvHistByTime[m.time] = m.value; });
+            tmfByTime = {};
+            if (data.tmf) data.tmf.forEach(m => { tmfByTime[m.time] = m.value; });
+            tmfSignalByTime = {};
+            if (data.tmf_signal) data.tmf_signal.forEach(m => { tmfSignalByTime[m.time] = m.value; });
+            vmacdByTime = {};
+            if (data.vmacd) data.vmacd.forEach(m => { vmacdByTime[m.time] = m.value; });
+            vmacdSignalByTime = {};
+            if (data.vmacd_signal) data.vmacd_signal.forEach(m => { vmacdSignalByTime[m.time] = m.value; });
+            mfiByTime = {};
+            if (data.mfi) data.mfi.forEach(m => { mfiByTime[m.time] = m.value; });
+            mfiSignalByTime = {};
+            if (data.mfi_signal) data.mfi_signal.forEach(m => { mfiSignalByTime[m.time] = m.value; });
 
             const candleTimes = data.candles.map(c => c.time);
             const alignToCandles = (arr) => {
@@ -2314,6 +2356,12 @@
             macdvSeries.setData(alignToCandles(data.macdv || []));
             macdvSignalSeries.setData(alignToCandles(data.macdv_signal || []));
             macdvHistSeries.setData(alignToCandles(data.macdv_hist || []));
+            tmfSeries.setData(alignToCandles(data.tmf || []));
+            tmfSignalSeries.setData(alignToCandles(data.tmf_signal || []));
+            vmacdSeries.setData(alignToCandles(data.vmacd || []));
+            vmacdSignalSeries.setData(alignToCandles(data.vmacd_signal || []));
+            mfiSeries.setData(alignToCandles(data.mfi || []));
+            mfiSignalSeries.setData(alignToCandles(data.mfi_signal || []));
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
@@ -2343,13 +2391,8 @@
             }
 
             if (fitContent) {
-                mainChart.timeScale().fitContent();
-                volumeChart.timeScale().fitContent();
-                rsiChart.timeScale().fitContent();
-                cmfChart.timeScale().fitContent();
-                atrChart.timeScale().fitContent();
-                macdChart.timeScale().fitContent();
-                macdvChart.timeScale().fitContent();
+                [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart, tmfChart, vmacdChart, mfiChart]
+                    .forEach(c => c.timeScale().fitContent());
             }
             applyVisibility();
         }
@@ -2359,7 +2402,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -2383,7 +2426,7 @@
             try {
                 const p = state.params;
                 const res = await fetch(
-                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}`
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}`
                 );
                 if (!res.ok) return;
                 const data = await res.json();
@@ -2437,6 +2480,15 @@
             const macdvVisible = state.indicators.macdv;
             document.getElementById('macdv-chart-container').style.display = macdvVisible ? 'block' : 'none';
 
+            const tmfVisible = state.indicators.tmf;
+            document.getElementById('tmf-chart-container').style.display = tmfVisible ? 'block' : 'none';
+
+            const vmacdVisible = state.indicators.vmacd;
+            document.getElementById('vmacd-chart-container').style.display = vmacdVisible ? 'block' : 'none';
+
+            const mfiVisible = state.indicators.mfi;
+            document.getElementById('mfi-chart-container').style.display = mfiVisible ? 'block' : 'none';
+
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             if (rsiVisible) rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
@@ -2444,6 +2496,9 @@
             if (atrVisible) atrChart.resize(atrEl.clientWidth, atrEl.clientHeight);
             if (macdVisible) macdChart.resize(macdEl.clientWidth, macdEl.clientHeight);
             if (macdvVisible) macdvChart.resize(macdvEl.clientWidth, macdvEl.clientHeight);
+            if (tmfVisible) tmfChart.resize(tmfEl.clientWidth, tmfEl.clientHeight);
+            if (vmacdVisible) vmacdChart.resize(vmacdEl.clientWidth, vmacdEl.clientHeight);
+            if (mfiVisible) mfiChart.resize(mfiEl.clientWidth, mfiEl.clientHeight);
         }
 
         // ----- UI helpers -----
@@ -2677,7 +2732,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv' };
+            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv', tmf: 'indToggleTmf', vmacd: 'indToggleVmacd', mfi: 'indToggleMfi' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -3062,6 +3117,37 @@
         });
 
         // ----- Resize -----
+        // ----- Draggable pane resize handles -----
+        // Each handle lives at the top of its sub-pane and controls the inner
+        // chart div's height. Dragging up makes the pane taller (main chart
+        // gives up its flex space); dragging down shrinks it.
+        document.querySelectorAll('.pane-resize-handle').forEach(handle => {
+            handle.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                const target = document.getElementById(handle.dataset.target);
+                if (!target) return;
+                const startY = e.clientY;
+                const startHeight = target.offsetHeight;
+                handle.classList.add('dragging');
+                document.body.style.cursor = 'ns-resize';
+                document.body.style.userSelect = 'none';
+                const onMove = (ev) => {
+                    const dy = ev.clientY - startY;
+                    const newHeight = Math.max(40, startHeight - dy);
+                    target.style.height = newHeight + 'px';
+                };
+                const onUp = () => {
+                    handle.classList.remove('dragging');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                    document.removeEventListener('mousemove', onMove);
+                    document.removeEventListener('mouseup', onUp);
+                };
+                document.addEventListener('mousemove', onMove);
+                document.addEventListener('mouseup', onUp);
+            });
+        });
+
         window.addEventListener('resize', () => {
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
@@ -3070,6 +3156,9 @@
             atrChart.resize(atrEl.clientWidth, atrEl.clientHeight);
             macdChart.resize(macdEl.clientWidth, macdEl.clientHeight);
             macdvChart.resize(macdvEl.clientWidth, macdvEl.clientHeight);
+            tmfChart.resize(tmfEl.clientWidth, tmfEl.clientHeight);
+            vmacdChart.resize(vmacdEl.clientWidth, vmacdEl.clientHeight);
+            mfiChart.resize(mfiEl.clientWidth, mfiEl.clientHeight);
             renderPatternOverlay();
         });
 
@@ -3551,6 +3640,12 @@
                     macdv:     macdvByTime[c.time]      != null ? Math.round(macdvByTime[c.time] * 100) / 100 : null,
                     macdv_sig: macdvSignalByTime[c.time]!= null ? Math.round(macdvSignalByTime[c.time] * 100) / 100 : null,
                     macdv_hist:macdvHistByTime[c.time]  != null ? Math.round(macdvHistByTime[c.time] * 100) / 100 : null,
+                    tmf:       tmfByTime[c.time]       != null ? Math.round(tmfByTime[c.time] * 1000) / 1000 : null,
+                    tmf_sig:   tmfSignalByTime[c.time] != null ? Math.round(tmfSignalByTime[c.time] * 1000) / 1000 : null,
+                    vmacd:     vmacdByTime[c.time]       != null ? Math.round(vmacdByTime[c.time]) : null,
+                    vmacd_sig: vmacdSignalByTime[c.time] != null ? Math.round(vmacdSignalByTime[c.time]) : null,
+                    mfi:       mfiByTime[c.time]       != null ? Math.round(mfiByTime[c.time] * 100) / 100 : null,
+                    mfi_sig:   mfiSignalByTime[c.time] != null ? Math.round(mfiSignalByTime[c.time] * 100) / 100 : null,
                 };
                 return row;
             });

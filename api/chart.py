@@ -188,6 +188,80 @@ def compute_cmf(highs, lows, closes, volumes, period=20):
     return cmf
 
 
+def compute_wilder_ma(values, period):
+    """Wilder's smoothed MA (EMA with alpha = 1/period). Tolerates None-free input."""
+    n = len(values)
+    result = [None] * n
+    if n < period:
+        return result
+    s = sum(values[:period]) / period
+    result[period - 1] = s
+    for i in range(period, n):
+        s = s + (values[i] - s) / period
+        result[i] = s
+    return result
+
+
+def compute_tmf(highs, lows, closes, volumes, period=21):
+    """Twiggs Money Flow — volume-weighted AD ratio using Wilder smoothing."""
+    n = len(closes)
+    if n == 0:
+        return [None] * n
+    ad = [0.0] * n
+    for i in range(n):
+        prev_close = closes[i - 1] if i > 0 else closes[i]
+        tr_high = max(highs[i], prev_close)
+        tr_low = min(lows[i], prev_close)
+        rng = tr_high - tr_low
+        ad[i] = 0.0 if rng == 0 else volumes[i] * (2 * closes[i] - tr_low - tr_high) / rng
+    ad_ma = compute_wilder_ma(ad, period)
+    vol_ma = compute_wilder_ma(volumes, period)
+    tmf = [None] * n
+    for i in range(n):
+        if ad_ma[i] is not None and vol_ma[i] is not None and vol_ma[i] != 0:
+            tmf[i] = ad_ma[i] / vol_ma[i]
+    return tmf
+
+
+def compute_vmacd(volumes, fast=12, slow=26, signal=9):
+    """MACD applied to volume."""
+    n = len(volumes)
+    fast_ema = compute_ema_from_values(volumes, fast)
+    slow_ema = compute_ema_from_values(volumes, slow)
+    vmacd = [None] * n
+    for i in range(n):
+        if fast_ema[i] is not None and slow_ema[i] is not None:
+            vmacd[i] = fast_ema[i] - slow_ema[i]
+    sig = compute_ema_from_values(vmacd, signal)
+    return vmacd, sig
+
+
+def compute_mfi(highs, lows, closes, volumes, period=14):
+    """Money Flow Index — volume-weighted RSI on typical price."""
+    n = len(closes)
+    mfi = [None] * n
+    if n < 2:
+        return mfi
+    tp = [(highs[i] + lows[i] + closes[i]) / 3 for i in range(n)]
+    mf = [tp[i] * volumes[i] for i in range(n)]
+    pos = [0.0] * n
+    neg = [0.0] * n
+    for i in range(1, n):
+        if tp[i] > tp[i - 1]:
+            pos[i] = mf[i]
+        elif tp[i] < tp[i - 1]:
+            neg[i] = mf[i]
+    for i in range(period, n):
+        pos_sum = sum(pos[i - period + 1: i + 1])
+        neg_sum = sum(neg[i - period + 1: i + 1])
+        if neg_sum == 0:
+            mfi[i] = 100.0
+        else:
+            mfr = pos_sum / neg_sum
+            mfi[i] = 100 - (100 / (1 + mfr))
+    return mfi
+
+
 def compute_macd_v(closes, highs, lows, fast=12, slow=26, signal=9, atr_len=26):
     """Compute volatility-normalised MACD (Spiroglou 2022).
     MACD-V = ((EMA(fast) - EMA(slow)) / ATR(atr_len)) * 100
@@ -271,6 +345,13 @@ class handler(BaseHTTPRequestHandler):
         macdv_slow = int(params.get("macdv_slow", [26])[0])
         macdv_signal = int(params.get("macdv_signal", [9])[0])
         macdv_atr = int(params.get("macdv_atr", [26])[0])
+        tmf_period = int(params.get("tmf_period", [21])[0])
+        tmf_signal = int(params.get("tmf_signal", [9])[0])
+        vmacd_fast = int(params.get("vmacd_fast", [12])[0])
+        vmacd_slow = int(params.get("vmacd_slow", [26])[0])
+        vmacd_signal = int(params.get("vmacd_signal", [9])[0])
+        mfi_period = int(params.get("mfi_period", [14])[0])
+        mfi_signal = int(params.get("mfi_signal", [9])[0])
 
         if period not in PERIOD_DAYS:
             period = "1y"
@@ -323,6 +404,11 @@ class handler(BaseHTTPRequestHandler):
         atr = compute_atr(highs, lows, closes, atr_period)
         macd_line, macd_sig, macd_hist = compute_macd(closes, macd_fast, macd_slow, macd_signal)
         macdv_line, macdv_sig, macdv_hist = compute_macd_v(closes, highs, lows, macdv_fast, macdv_slow, macdv_signal, macdv_atr)
+        tmf_vals = compute_tmf(highs, lows, closes, volumes, tmf_period)
+        tmf_sig_vals = compute_ema_from_values(tmf_vals, tmf_signal)
+        vmacd_line, vmacd_sig = compute_vmacd(volumes, vmacd_fast, vmacd_slow, vmacd_signal)
+        mfi_vals = compute_mfi(highs, lows, closes, volumes, mfi_period)
+        mfi_sig_vals = compute_ema_from_values(mfi_vals, mfi_signal)
         supertrend, st_dir = compute_supertrend(highs, lows, closes, st_period, st_mult)
         ma_vals = compute_ma(closes, ma_period)
         vol_ma14 = compute_ma(volumes, 14)
@@ -342,6 +428,12 @@ class handler(BaseHTTPRequestHandler):
         macdv_data = []
         macdv_signal_data = []
         macdv_hist_data = []
+        tmf_data = []
+        tmf_signal_data = []
+        vmacd_data = []
+        vmacd_signal_data = []
+        mfi_data = []
+        mfi_signal_data = []
         supertrend_data = []
         ma_data = []
         cmf_data = []
@@ -389,6 +481,21 @@ class handler(BaseHTTPRequestHandler):
                 color_v = "rgba(38,166,154,0.6)" if hv >= 0 else "rgba(239,83,80,0.6)"
                 macdv_hist_data.append({"time": t, "value": hv, "color": color_v})
 
+            if tmf_vals[i] is not None:
+                tmf_data.append({"time": t, "value": round(tmf_vals[i], 4)})
+            if tmf_sig_vals[i] is not None:
+                tmf_signal_data.append({"time": t, "value": round(tmf_sig_vals[i], 4)})
+
+            if vmacd_line[i] is not None:
+                vmacd_data.append({"time": t, "value": round(vmacd_line[i], 2)})
+            if vmacd_sig[i] is not None:
+                vmacd_signal_data.append({"time": t, "value": round(vmacd_sig[i], 2)})
+
+            if mfi_vals[i] is not None:
+                mfi_data.append({"time": t, "value": round(mfi_vals[i], 2)})
+            if mfi_sig_vals[i] is not None:
+                mfi_signal_data.append({"time": t, "value": round(mfi_sig_vals[i], 2)})
+
             if supertrend[i] is not None:
                 st_val = round(supertrend[i], 2)
                 st_color = "#26a69a" if st_dir[i] == 1 else "#ef5350"
@@ -419,6 +526,12 @@ class handler(BaseHTTPRequestHandler):
             "macdv": macdv_data,
             "macdv_signal": macdv_signal_data,
             "macdv_hist": macdv_hist_data,
+            "tmf": tmf_data,
+            "tmf_signal": tmf_signal_data,
+            "vmacd": vmacd_data,
+            "vmacd_signal": vmacd_signal_data,
+            "mfi": mfi_data,
+            "mfi_signal": mfi_signal_data,
             "supertrend": supertrend_data,
             "ma": ma_data,
             "cmf": cmf_data,
