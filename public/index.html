@@ -1245,6 +1245,10 @@
         <button class="toolbar-icon-btn" id="firstMarkerBtn" title="Go to first marker" style="font-size:11px;padding:4px 8px;gap:3px">
             &#8594; 1st
         </button>
+        <button class="toolbar-icon-btn" id="resetLayoutBtn" title="Reset pane sizes, visibility, and zoom to defaults" style="font-size:11px;padding:4px 8px;gap:3px">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+            Reset
+        </button>
 
         <div class="toolbar-right">
             <div class="live-indicator" id="liveIndicator" title="Live price updates every 10s during market hours">
@@ -3664,8 +3668,132 @@
             candleCtxPopup.style.top  = Math.max(8, py) + 'px';
         });
 
+        // ----- Saved layout (auto-persist to localStorage) -----
+        const LAYOUT_STORAGE_KEY = 'stockcharter:layout:v1';
+        const LAYOUT_PANE_IDS = [
+            'volume-chart', 'rsi-chart', 'cmf-chart', 'atr-chart',
+            'macd-chart', 'macdv-chart', 'tmf-chart', 'vmacd-chart', 'mfi-chart',
+        ];
+        let _layoutSaveTimer = null;
+        let _suppressLayoutSave = true;  // suppress until initial restore completes
+
+        function readSavedLayout() {
+            try {
+                const raw = localStorage.getItem(LAYOUT_STORAGE_KEY);
+                if (!raw) return null;
+                const parsed = JSON.parse(raw);
+                if (!parsed || parsed.version !== 1) return null;
+                return parsed;
+            } catch (_) { return null; }
+        }
+
+        function saveLayoutNow() {
+            if (_suppressLayoutSave) return;
+            try {
+                const paneHeights = {};
+                for (const id of LAYOUT_PANE_IDS) {
+                    const el = document.getElementById(id);
+                    if (el && el.style.height) paneHeights[id] = el.style.height;
+                }
+                let visibleRange = null;
+                try { visibleRange = mainChart.timeScale().getVisibleLogicalRange(); } catch (_) {}
+                const payload = {
+                    version: 1,
+                    ticker: state.ticker,
+                    period: state.period,
+                    indicators: state.indicators,
+                    params: state.params,
+                    paneHeights,
+                    visibleRange,
+                    markers: activeMarkers,
+                };
+                localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(payload));
+            } catch (_) { /* quota / serialization errors silently ignored */ }
+        }
+
+        function scheduleLayoutSave() {
+            if (_suppressLayoutSave) return;
+            if (_layoutSaveTimer) clearTimeout(_layoutSaveTimer);
+            _layoutSaveTimer = setTimeout(saveLayoutNow, 250);
+        }
+
+        // Apply pre-chart-load parts of the saved layout: ticker, period,
+        // indicator visibility/params, pane heights, markers. The visible
+        // logical range is restored after applyChartData has populated bars.
+        function applySavedLayoutPreLoad(saved) {
+            if (!saved) return;
+            if (saved.ticker) state.ticker = saved.ticker;
+            if (saved.period) state.period = saved.period;
+            if (saved.indicators) {
+                for (const k of Object.keys(saved.indicators)) {
+                    if (k in state.indicators) state.indicators[k] = !!saved.indicators[k];
+                }
+            }
+            if (saved.params) {
+                for (const k of Object.keys(saved.params)) {
+                    if (k in state.params && typeof saved.params[k] === 'object') {
+                        Object.assign(state.params[k], saved.params[k]);
+                    }
+                }
+            }
+            if (saved.paneHeights) {
+                for (const id of LAYOUT_PANE_IDS) {
+                    const h = saved.paneHeights[id];
+                    if (!h) continue;
+                    const el = document.getElementById(id);
+                    if (el) el.style.height = h;
+                }
+            }
+            if (Array.isArray(saved.markers)) activeMarkers = saved.markers;
+
+            // Sync UI elements that mirror state
+            document.getElementById('tickerInput').value = state.ticker;
+            document.querySelectorAll('.period-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.period === state.period);
+            });
+        }
+
+        function applySavedLayoutPostLoad(saved) {
+            if (!saved) return;
+            if (saved.visibleRange && Number.isFinite(saved.visibleRange.from) && Number.isFinite(saved.visibleRange.to)) {
+                try { mainChart.timeScale().setVisibleLogicalRange(saved.visibleRange); } catch (_) {}
+            }
+        }
+
+        function resetLayout() {
+            try { localStorage.removeItem(LAYOUT_STORAGE_KEY); } catch (_) {}
+            globalThis.location.reload();
+        }
+        document.getElementById('resetLayoutBtn').addEventListener('click', resetLayout);
+
+        // Hook auto-save into the user-driven mutation sites. Ticker/period
+        // changes and settings-apply trigger loadChart() → fitContent() →
+        // visibleLogicalRangeChange, so they're captured by the range listener
+        // below. Indicator/eye toggles, pane resize drag end, and marker apply
+        // need explicit hooks because they don't change the visible range.
+        document.querySelectorAll('.ind-toggle').forEach(t => t.addEventListener('click', scheduleLayoutSave));
+        document.querySelectorAll('.eye-btn').forEach(b => b.addEventListener('click', scheduleLayoutSave));
+        document.querySelectorAll('.pane-resize-handle').forEach(h => {
+            h.addEventListener('mouseup', scheduleLayoutSave);
+        });
+        document.getElementById('markersApply').addEventListener('click', scheduleLayoutSave);
+        document.getElementById('markersClear').addEventListener('click', scheduleLayoutSave);
+        mainChart.timeScale().subscribeVisibleLogicalRangeChange(() => scheduleLayoutSave());
+
         // ----- Init -----
-        loadChart().then(() => startPolling());
+        const _savedLayout = readSavedLayout();
+        applySavedLayoutPreLoad(_savedLayout);
+        // Refresh dropdown toggle pills + param labels to reflect restored state
+        if (_savedLayout) {
+            syncIndicatorToggles();
+            updateIndicatorParams();
+        }
+        loadChart().then(() => {
+            applySavedLayoutPostLoad(_savedLayout);
+            _suppressLayoutSave = false;  // allow saves now that defaults aren't fighting us
+            saveLayoutNow();
+            startPolling();
+        });
     </script>
 </body>
 </html>
