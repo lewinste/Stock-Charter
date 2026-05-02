@@ -3200,8 +3200,14 @@
                 if (!q.trading) return;
                 if (currentCandles.length === 0 || !q.close) return;
 
+                // Belt-and-suspenders: never inject a candle on Sat/Sun, even
+                // if the quote endpoint mistakenly reports the market as open.
+                const nowLocal = new Date();
+                const dow = nowLocal.getDay(); // Sun=0, Sat=6
+                if (dow === 0 || dow === 6) return;
+
                 const lastCandle = currentCandles[currentCandles.length - 1];
-                const today = new Date().toISOString().slice(0, 10);
+                const today = nowLocal.toISOString().slice(0, 10);
 
                 if (lastCandle.time === today) {
                     lastCandle.open = q.open ?? lastCandle.open;

@@ -2,6 +2,7 @@
 
 from http.server import BaseHTTPRequestHandler
 import json
+import time
 from urllib.parse import parse_qs, urlparse
 from urllib.request import urlopen, Request
 
@@ -67,12 +68,14 @@ def fetch_quote(ticker):
         day_close = float(c)
         day_volume += int(v) if v else 0
 
-    # Determine if market is currently open
-    exchange_tz = meta.get("exchangeTimezoneName", "")
+    # Determine if market is currently open. Use wall-clock now, not the last
+    # intraday timestamp — on weekends Yahoo returns Friday's intraday data and
+    # its last timestamp equals currentTradingPeriod.regular.end, which would
+    # falsely report the market as still open.
     trading = meta.get("currentTradingPeriod", {}).get("regular", {})
-    now_ts = timestamps[-1] if timestamps else 0
+    now_ts = int(time.time())
     is_trading = (
-        trading.get("start", 0) <= now_ts <= trading.get("end", 0)
+        trading.get("start", 0) <= now_ts < trading.get("end", 0)
         if trading else False
     )
 
