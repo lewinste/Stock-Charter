@@ -1963,6 +1963,7 @@
         let cmfSignalByTime = {};
         let stByTime = {};
         let atrByTime = {};
+        let closeByTime = {};
         let macdByTime = {};
         let macdSignalByTime = {};
         let macdHistByTime = {};
@@ -2086,7 +2087,10 @@
 
         function updateAtrLegendValue(time) {
             const v = atrByTime[time];
-            atrLegendVal.textContent = v != null ? v.toFixed(2) : '';
+            if (v == null) { atrLegendVal.textContent = ''; return; }
+            const close = closeByTime[time];
+            const pct = (close != null && close !== 0) ? (v / close * 100).toFixed(2) : null;
+            atrLegendVal.textContent = pct != null ? `${v.toFixed(2)} (${pct}%)` : v.toFixed(2);
         }
 
         function updateMacdLegendValue(time) {
@@ -2292,6 +2296,8 @@
         // ----- Data loading -----
         function applyChartData(data, fitContent) {
             currentCandles = data.candles;
+            closeByTime = {};
+            data.candles.forEach(c => { closeByTime[c.time] = c.close; });
             currentVolume = data.volume;
             volumeByTime = {};
             data.volume.forEach(v => { volumeByTime[v.time] = v.value; });
@@ -3214,6 +3220,7 @@
                     lastCandle.high = q.high ?? lastCandle.high;
                     lastCandle.low = q.low ?? lastCandle.low;
                     lastCandle.close = q.close;
+                    closeByTime[today] = q.close;
                     candleSeries.update(lastCandle);
 
                     const prev = currentCandles.length > 1 ? currentCandles[currentCandles.length - 2] : lastCandle;
@@ -3231,6 +3238,7 @@
                         close: q.close,
                     };
                     currentCandles.push(newCandle);
+                    closeByTime[today] = q.close;
                     candleSeries.update(newCandle);
 
                     volumeSeries.update({
