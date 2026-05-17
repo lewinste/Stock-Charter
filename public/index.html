@@ -1206,6 +1206,16 @@
                         <button class="ind-toggle on" data-ind="mfi" id="indToggleMfi"></button>
                     </div>
                 </div>
+                <div class="ind-dropdown-item" data-ind="earnings">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#fbc02d;color:#1a1a1a;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">$</span>
+                        <span class="ind-dropdown-name">Earnings</span>
+                        <span class="ind-dropdown-param">(past + next)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-toggle on" data-ind="earnings" id="indToggleEarnings"></button>
+                    </div>
+                </div>
                 <div id="customIndicatorsList"></div>
                 <div class="ind-dropdown-sep"></div>
                 <div style="position:relative">
@@ -1509,7 +1519,7 @@
         const state = {
             ticker: 'SPY',
             period: '6mo',
-            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true, tmf: true, vmacd: true, mfi: true },
+            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true, tmf: true, vmacd: true, mfi: true, earnings: true },
             params: {
                 ma20:  { period: 20,  color: '#00bcd4', lineWidth: 1,   lineStyle: 0 },
                 ma50:  { period: 50,  color: '#ff9800', lineWidth: 2,   lineStyle: 0 },
@@ -1998,12 +2008,32 @@
             const sign = change >= 0 ? '+' : '';
             const badgeCls = isUp ? 'up' : 'down';
 
+            let earningsBadge = '';
+            const ev = state.indicators.earnings ? earningsByDate[candle.time] : null;
+            if (ev) {
+                if (ev.type === 'upcoming') {
+                    const est = ev.epsEstimate != null ? ev.epsEstimate.toFixed(2) : '—';
+                    const tag = ev.isEstimate ? ' (est. date)' : '';
+                    earningsBadge = `<span class="change-badge" style="background:#fff8e1;color:#8d6e00;border:1px solid #f0d067">$ Earnings${tag} · est ${est}</span>`;
+                } else {
+                    const sp = ev.surprisePct;
+                    const beat = sp != null && sp >= 0;
+                    const bg = beat ? 'var(--green-bg)' : 'var(--red-bg)';
+                    const col = beat ? 'var(--green)' : 'var(--red)';
+                    const actual = ev.epsActual != null ? ev.epsActual.toFixed(2) : '—';
+                    const est = ev.epsEstimate != null ? ev.epsEstimate.toFixed(2) : '—';
+                    const surpriseTxt = sp != null ? ` (${sp >= 0 ? '+' : ''}${sp.toFixed(2)}%)` : '';
+                    earningsBadge = `<span class="change-badge" style="background:${bg};color:${col}">$ EPS ${actual} vs est ${est}${surpriseTxt}</span>`;
+                }
+            }
+
             ohlcLegend.innerHTML =
                 `<span class="lbl">O</span><span class="${cls}">${candle.open.toFixed(2)}</span>` +
                 `<span class="lbl">H</span><span class="${cls}">${candle.high.toFixed(2)}</span>` +
                 `<span class="lbl">L</span><span class="${cls}">${candle.low.toFixed(2)}</span>` +
                 `<span class="lbl">C</span><span class="${cls}">${candle.close.toFixed(2)}</span>` +
-                `<span class="change-badge ${badgeCls}">${sign}${change.toFixed(2)} (${sign}${pct}%)</span>`;
+                `<span class="change-badge ${badgeCls}">${sign}${change.toFixed(2)} (${sign}${pct}%)</span>` +
+                earningsBadge;
         }
 
         // ----- Volume Legend on hover -----
@@ -2417,6 +2447,7 @@
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
                 applyChartData(data, true);
+                loadEarnings();
             } catch (e) {
                 showToast('Failed to load data. Check the ticker symbol.');
             } finally {
@@ -2742,7 +2773,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv', tmf: 'indToggleTmf', vmacd: 'indToggleVmacd', mfi: 'indToggleMfi' };
+            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv', tmf: 'indToggleTmf', vmacd: 'indToggleVmacd', mfi: 'indToggleMfi', earnings: 'indToggleEarnings' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -2773,6 +2804,7 @@
                     eyeBtn.classList.toggle('off', !state.indicators[ind]);
                 }
                 applyVisibility();
+                if (ind === 'earnings') applyMarkersToChart();
             });
         });
 
@@ -3285,6 +3317,25 @@
 
         // ----- Buy/Sell Markers -----
         let activeMarkers = [];  // raw marker data from user
+        let earningsEvents = [];        // [{date, type, epsActual, epsEstimate, surprisePct, isEstimate, quarter}]
+        let earningsByDate = {};        // date -> event
+
+        async function loadEarnings() {
+            const tk = state.ticker;
+            try {
+                const res = await fetch(`/api/earnings?ticker=${encodeURIComponent(tk)}`);
+                if (!res.ok) { earningsEvents = []; earningsByDate = {}; return; }
+                const data = await res.json();
+                if (tk !== state.ticker) return; // ticker changed mid-flight
+                earningsEvents = Array.isArray(data.events) ? data.events : [];
+                earningsByDate = {};
+                for (const e of earningsEvents) earningsByDate[e.date] = e;
+            } catch (_) {
+                earningsEvents = []; earningsByDate = {};
+            } finally {
+                applyMarkersToChart();
+            }
+        }
 
         const markersOverlay = document.getElementById('markersOverlay');
         const markersTextarea = document.getElementById('markersTextarea');
@@ -3450,9 +3501,40 @@
                 `<svg width="${W}" height="${H}" style="position:absolute;top:0;left:0">${items.join('')}</svg>`;
         }
 
+        // Lightweight-charts setMarkers needs times that exist in the series.
+        // Snap earnings dates that fall on weekends/holidays to the next trading day,
+        // and remember the snap so the legend lookup still finds the event.
+        function buildEarningsMarkers() {
+            if (!state.indicators.earnings || !earningsEvents.length || !currentCandles.length) return [];
+            const candleTimes = currentCandles.map(c => c.time);
+            const candleTimeSet = new Set(candleTimes);
+            earningsByDate = {};
+            const markers = [];
+            for (const e of earningsEvents) {
+                let t = e.date;
+                if (!candleTimeSet.has(t)) {
+                    t = candleTimes.find(ct => ct >= e.date);
+                    if (!t) continue; // event is past the chart's last bar (future upcoming) — skip
+                }
+                earningsByDate[t] = e;
+                const color = e.type === 'upcoming' ? '#9e9e9e'
+                            : (e.surprisePct != null && e.surprisePct < 0 ? '#B71C1C' : '#006B2D');
+                markers.push({
+                    time: t,
+                    position: 'aboveBar',
+                    color,
+                    shape: 'circle',
+                    text: '$',
+                });
+            }
+            return markers;
+        }
+
         function applyMarkersToChart() {
+            const earningsArrows = buildEarningsMarkers();
+
             if (activeMarkers.length === 0) {
-                candleSeries.setMarkers([]);
+                candleSeries.setMarkers(earningsArrows);
                 markerOutlineSeries.setData([]);
                 markerOutlineSeries.setMarkers([]);
                 markerDotSeries.setData([]);
@@ -3480,7 +3562,7 @@
                 return candleTimes.map(t => by[t] || { time: t });
             };
 
-            // Arrow markers on candle series — buy/sell only
+            // Arrow markers on candle series — buy/sell + earnings $
             const arrows = activeMarkers
                 .filter(m => (m.event === 'buy' || m.event === 'sell') && candleTimeSet.has(m.date))
                 .map(m => ({
@@ -3490,6 +3572,7 @@
                     shape: m.event === 'buy' ? 'arrowUp' : 'arrowDown',
                     text: (m.event === 'buy' ? 'BUY' : 'SELL') + ' @ ' + m.price.toFixed(2),
                 }))
+                .concat(earningsArrows)
                 .sort((a, b) => a.time.localeCompare(b.time));
             candleSeries.setMarkers(arrows);
 
