@@ -331,6 +331,15 @@
             justify-content: space-between;
             margin-bottom: 12px;
         }
+        .settings-help {
+            font-size: 12px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            background: var(--bg-secondary, #f5f5f7);
+            border-radius: 6px;
+            padding: 8px 10px;
+            margin-bottom: 14px;
+        }
         .settings-field label {
             font-size: 13px;
             color: var(--text-secondary);
@@ -496,6 +505,11 @@
         }
 
         #mfi-chart {
+            height: 120px;
+            border-top: 1px solid var(--border);
+        }
+
+        #smoothness-chart {
             height: 120px;
             border-top: 1px solid var(--border);
         }
@@ -1206,6 +1220,19 @@
                         <button class="ind-toggle on" data-ind="mfi" id="indToggleMfi"></button>
                     </div>
                 </div>
+                <div class="ind-dropdown-item" data-ind="smoothness">
+                    <div class="ind-dropdown-left">
+                        <span class="ind-dropdown-swatch" style="background:#26a69a"></span>
+                        <span class="ind-dropdown-name">Smoothness</span>
+                        <span class="ind-dropdown-param" id="indParamSm">(20)</span>
+                    </div>
+                    <div class="ind-dropdown-right">
+                        <button class="ind-gear-btn" data-ind="smoothness" title="Settings">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                        </button>
+                        <button class="ind-toggle on" data-ind="smoothness" id="indToggleSm"></button>
+                    </div>
+                </div>
                 <div class="ind-dropdown-item" data-ind="earnings">
                     <div class="ind-dropdown-left">
                         <span class="ind-dropdown-swatch" style="background:#fbc02d;color:#1a1a1a;display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11px">$</span>
@@ -1453,6 +1480,24 @@
             </div>
             <div id="mfi-chart"></div>
         </div>
+        <div id="smoothness-chart-container" style="position:relative">
+            <div class="pane-resize-handle" data-target="smoothness-chart" title="Drag to resize pane"></div>
+            <div class="ind-legend">
+                <div class="ind-legend-row" id="smoothnessLegendRow" data-ind="smoothness">
+                    <span class="ind-name" id="smoothnessLegendName" style="color:#26a69a">Smoothness (20)</span>
+                    <button class="ind-btn eye-btn" data-ind="smoothness" title="Toggle visibility">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                    <button class="ind-btn gear-btn" data-ind="smoothness" title="Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+                    </button>
+                    <span class="ind-val" id="smoothnessLegendVal" style="color:#26a69a"></span>
+                    <span class="ind-name" style="color:var(--text-muted);margin-left:6px">Raw</span>
+                    <span class="ind-val" id="smoothnessRawLegendVal" style="color:var(--text-muted)"></span>
+                </div>
+            </div>
+            <div id="smoothness-chart"></div>
+        </div>
     </div>
 
     <!-- Settings Modal -->
@@ -1519,7 +1564,7 @@
         const state = {
             ticker: 'SPY',
             period: '6mo',
-            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true, tmf: true, vmacd: true, mfi: true, earnings: true },
+            indicators: { ma20: true, ma50: true, ma200: true, supertrend: true, rsi: true, cmf: true, atr: true, macd: true, macdv: true, tmf: true, vmacd: true, mfi: true, smoothness: true, earnings: true },
             params: {
                 ma20:  { period: 20,  color: '#00bcd4', lineWidth: 1,   lineStyle: 0 },
                 ma50:  { period: 50,  color: '#ff9800', lineWidth: 2,   lineStyle: 0 },
@@ -1533,6 +1578,7 @@
                 tmf:   { period: 21, signal: 9, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
                 vmacd: { fast: 12, slow: 26, signal: 9, color: '#5c6bc0', lineWidth: 1.5, lineStyle: 0 },
                 mfi:   { period: 14, signal: 9, color: '#ec407a', lineWidth: 1.5, lineStyle: 0 },
+                smoothness: { period: 20, pctLookback: 252, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -1632,6 +1678,9 @@
         const mfiEl = document.getElementById('mfi-chart');
         const mfiChart = LightweightCharts.createChart(mfiEl, subPaneOpts);
 
+        const smoothnessEl = document.getElementById('smoothness-chart');
+        const smoothnessChart = LightweightCharts.createChart(smoothnessEl, subPaneOpts);
+
         const macdvEl = document.getElementById('macdv-chart');
         const macdvChart = LightweightCharts.createChart(macdvEl, {
             layout: {
@@ -1730,7 +1779,7 @@
                 isSyncing = false;
             });
         }
-        const _allCharts = () => [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart, tmfChart, vmacdChart, mfiChart];
+        const _allCharts = () => [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart, tmfChart, vmacdChart, mfiChart, smoothnessChart];
         _allCharts().forEach(src => syncRange(src, _allCharts().filter(c => c !== src)));
 
         // ----- Series on main chart (candles + indicators only) -----
@@ -1953,6 +2002,22 @@
         mfiSeries.createPriceLine({ price: 50, color: 'rgba(180,180,180,0.5)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
         mfiSeries.createPriceLine({ price: 20, color: 'rgba(236,64,122,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
 
+        // ----- Series on Smoothness chart -----
+        // Percentile line pins the pane to a fixed 0–100 scale; the raw reading
+        // rides along thinner and dimmer for the absolute value.
+        const smoothnessSeries = smoothnessChart.addLineSeries({
+            color: '#26a69a', lineWidth: 1.5,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, baseLineVisible: false,
+            autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
+        });
+        const smoothnessRawSeries = smoothnessChart.addLineSeries({
+            color: 'rgba(38,166,154,0.4)', lineWidth: 1,
+            priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false, baseLineVisible: false,
+            autoscaleInfoProvider: () => ({ priceRange: { minValue: 0, maxValue: 100 } }),
+        });
+        smoothnessSeries.createPriceLine({ price: 70, color: 'rgba(38,166,154,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+        smoothnessSeries.createPriceLine({ price: 30, color: 'rgba(38,166,154,0.35)', lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
+
         // Reference bands per Spiroglou paper
         macdvSeries.createPriceLine({ price: 150,  color: 'rgba(216,27,96,0.35)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false });
         macdvSeries.createPriceLine({ price: 100,  color: 'rgba(216,27,96,0.20)',  lineWidth: 1, lineStyle: LightweightCharts.LineStyle.Dotted, axisLabelVisible: false });
@@ -1986,6 +2051,8 @@
         let vmacdSignalByTime = {};
         let mfiByTime = {};
         let mfiSignalByTime = {};
+        let smoothnessByTime = {};
+        let smoothnessRawByTime = {};
 
         // ----- Infinite scroll state -----
         const PERIOD_DAYS = { '1mo': 30, '3mo': 90, '6mo': 180, '1y': 365, '2y': 730, '5y': 1825 };
@@ -2083,6 +2150,8 @@
         const vmacdSignalLegendVal = document.getElementById('vmacdSignalLegendVal');
         const mfiLegendVal = document.getElementById('mfiLegendVal');
         const mfiSignalLegendVal = document.getElementById('mfiSignalLegendVal');
+        const smoothnessLegendVal = document.getElementById('smoothnessLegendVal');
+        const smoothnessRawLegendVal = document.getElementById('smoothnessRawLegendVal');
 
         function updateIndLegendValues(param) {
             if (param && param.seriesData) {
@@ -2162,6 +2231,13 @@
             mfiSignalLegendVal.textContent = s != null ? s.toFixed(2) : '';
         }
 
+        function updateSmoothnessLegendValue(time) {
+            const v = smoothnessByTime[time];
+            const raw = smoothnessRawByTime[time];
+            smoothnessLegendVal.textContent = v != null ? v.toFixed(2) : '';
+            smoothnessRawLegendVal.textContent = raw != null ? raw.toFixed(2) : '';
+        }
+
         // Single chokepoint for sub-pane legend updates — keeps every crosshair
         // handler in lockstep as new panes are added.
         function updateAllSubPaneLegends(time) {
@@ -2178,6 +2254,7 @@
             updateTmfLegendValue(time);
             updateVmacdLegendValue(time);
             updateMfiLegendValue(time);
+            updateSmoothnessLegendValue(time);
         }
 
         function clearAllSubPaneLegends() {
@@ -2197,6 +2274,8 @@
             vmacdSignalLegendVal.textContent = '';
             mfiLegendVal.textContent = '';
             mfiSignalLegendVal.textContent = '';
+            smoothnessLegendVal.textContent = '';
+            smoothnessRawLegendVal.textContent = '';
             const cmfSigEl = document.getElementById('cmfSignalLegendVal');
             if (cmfSigEl) cmfSigEl.textContent = '';
         }
@@ -2240,6 +2319,7 @@
             { chart: tmfChart,    series: tmfSeries },
             { chart: vmacdChart,  series: vmacdSeries },
             { chart: mfiChart,    series: mfiSeries },
+            { chart: smoothnessChart, series: smoothnessSeries },
         ]);
 
         function subscribeSubPaneHover(srcChart) {
@@ -2369,6 +2449,10 @@
             if (data.mfi) data.mfi.forEach(m => { mfiByTime[m.time] = m.value; });
             mfiSignalByTime = {};
             if (data.mfi_signal) data.mfi_signal.forEach(m => { mfiSignalByTime[m.time] = m.value; });
+            smoothnessByTime = {};
+            if (data.smoothness) data.smoothness.forEach(s => { smoothnessByTime[s.time] = s.value; });
+            smoothnessRawByTime = {};
+            if (data.smoothness_raw) data.smoothness_raw.forEach(s => { smoothnessRawByTime[s.time] = s.value; });
 
             const candleTimes = data.candles.map(c => c.time);
             const alignToCandles = (arr) => {
@@ -2402,6 +2486,8 @@
             vmacdSignalSeries.setData(alignToCandles(data.vmacd_signal || []));
             mfiSeries.setData(alignToCandles(data.mfi || []));
             mfiSignalSeries.setData(alignToCandles(data.mfi_signal || []));
+            smoothnessSeries.setData(alignToCandles(data.smoothness || []));
+            smoothnessRawSeries.setData(alignToCandles(data.smoothness_raw || []));
 
             if (typeof recomputeAllCustomIndicators === 'function') recomputeAllCustomIndicators();
 
@@ -2431,8 +2517,7 @@
             }
 
             if (fitContent) {
-                [mainChart, volumeChart, rsiChart, cmfChart, atrChart, macdChart, macdvChart, tmfChart, vmacdChart, mfiChart]
-                    .forEach(c => c.timeScale().fitContent());
+                _allCharts().forEach(c => c.timeScale().fitContent());
             }
             applyVisibility();
         }
@@ -2442,7 +2527,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}&sm_period=${p.smoothness.period}&sm_pct_lookback=${p.smoothness.pctLookback}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -2467,7 +2552,7 @@
             try {
                 const p = state.params;
                 const res = await fetch(
-                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}`
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}&sm_period=${p.smoothness.period}&sm_pct_lookback=${p.smoothness.pctLookback}`
                 );
                 if (!res.ok) return;
                 const data = await res.json();
@@ -2530,6 +2615,9 @@
             const mfiVisible = state.indicators.mfi;
             document.getElementById('mfi-chart-container').style.display = mfiVisible ? 'block' : 'none';
 
+            const smoothnessVisible = state.indicators.smoothness;
+            document.getElementById('smoothness-chart-container').style.display = smoothnessVisible ? 'block' : 'none';
+
             mainChart.resize(mainEl.clientWidth, mainEl.clientHeight);
             volumeChart.resize(volEl.clientWidth, volEl.clientHeight);
             if (rsiVisible) rsiChart.resize(rsiEl.clientWidth, rsiEl.clientHeight);
@@ -2540,6 +2628,7 @@
             if (tmfVisible) tmfChart.resize(tmfEl.clientWidth, tmfEl.clientHeight);
             if (vmacdVisible) vmacdChart.resize(vmacdEl.clientWidth, vmacdEl.clientHeight);
             if (mfiVisible) mfiChart.resize(mfiEl.clientWidth, mfiEl.clientHeight);
+            if (smoothnessVisible) smoothnessChart.resize(smoothnessEl.clientWidth, smoothnessEl.clientHeight);
         }
 
         // ----- UI helpers -----
@@ -2639,6 +2728,19 @@
                 title: 'CMF Settings',
                 fields: [{ key: 'period', label: 'Period', type: 'number', min: 1, max: 100 }, ...styleFields],
             },
+            smoothness: {
+                title: 'Smoothness Settings',
+                help: 'How orderly the price action is — a steady institutional grind vs hectic chop. '
+                    + 'Shown as a percentile of this stock\'s own past year, so it is comparable across '
+                    + 'price levels and volatility.<br>'
+                    + '&gt;70 = unusually orderly for this stock (steady, persistent accumulation)<br>'
+                    + '&lt;30 = unusually hectic (choppy, news-driven, indecisive)',
+                fields: [
+                    { key: 'period', label: 'Period', type: 'number', min: 2, max: 200 },
+                    { key: 'pctLookback', label: 'Percentile Lookback', type: 'number', min: 60, max: 2000 },
+                    ...styleFields,
+                ],
+            },
         };
 
         function renderSettingsField(f, val) {
@@ -2668,7 +2770,10 @@
             currentSettingsInd = ind;
             const cfg = settingsConfig[ind];
             settingsTitle.textContent = cfg.title;
-            settingsBody.innerHTML = cfg.fields.map(f => {
+            const help = cfg.help
+                ? `<div class="settings-help">${cfg.help}</div>`
+                : '';
+            settingsBody.innerHTML = help + cfg.fields.map(f => {
                 const val = state.params[ind][f.key];
                 return renderSettingsField(f, val);
             }).join('');
@@ -2702,6 +2807,12 @@
             cmfName.textContent = `CMF (${p.cmf.period})`;
             cmfName.style.color = p.cmf.color;
             document.getElementById('cmfLegendVal').style.color = p.cmf.color;
+            const smName = document.getElementById('smoothnessLegendName');
+            smName.textContent = `Smoothness (${p.smoothness.period})`;
+            smName.style.color = p.smoothness.color;
+            document.getElementById('smoothnessLegendVal').style.color = p.smoothness.color;
+            const smSwatch = document.querySelector('.ind-dropdown-item[data-ind="smoothness"] .ind-dropdown-swatch');
+            if (smSwatch) smSwatch.style.background = p.smoothness.color;
         }
 
         document.querySelectorAll('.gear-btn').forEach(btn => {
@@ -2740,6 +2851,8 @@
             rsiSeries.applyOptions({ color: rp.color, lineWidth: rp.lineWidth, lineStyle: rp.lineStyle });
             const cp = state.params.cmf;
             cmfSeries.applyOptions({ color: cp.color, lineWidth: cp.lineWidth, lineStyle: cp.lineStyle });
+            const smp = state.params.smoothness;
+            smoothnessSeries.applyOptions({ color: smp.color, lineWidth: smp.lineWidth, lineStyle: smp.lineStyle });
         }
 
         document.getElementById('settingsApply').addEventListener('click', () => {
@@ -2773,7 +2886,7 @@
         });
 
         function syncIndicatorToggles() {
-            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv', tmf: 'indToggleTmf', vmacd: 'indToggleVmacd', mfi: 'indToggleMfi', earnings: 'indToggleEarnings' };
+            const map = { ma20: 'indToggleMa20', ma50: 'indToggleMa50', ma200: 'indToggleMa200', supertrend: 'indToggleSt', rsi: 'indToggleRsi', cmf: 'indToggleCmf', atr: 'indToggleAtr', macd: 'indToggleMacd', macdv: 'indToggleMacdv', tmf: 'indToggleTmf', vmacd: 'indToggleVmacd', mfi: 'indToggleMfi', smoothness: 'indToggleSm', earnings: 'indToggleEarnings' };
             for (const [ind, id] of Object.entries(map)) {
                 const toggle = document.getElementById(id);
                 if (toggle) toggle.classList.toggle('on', state.indicators[ind]);
@@ -2785,6 +2898,7 @@
             document.getElementById('indParamSt').textContent = `(${p.supertrend.period}, ${p.supertrend.multiplier})`;
             document.getElementById('indParamRsi').textContent = `(${p.rsi.period})`;
             document.getElementById('indParamCmf').textContent = `(${p.cmf.period})`;
+            document.getElementById('indParamSm').textContent = `(${p.smoothness.period})`;
         }
 
         // Toggle switches in indicators dropdown
@@ -3201,6 +3315,7 @@
             tmfChart.resize(tmfEl.clientWidth, tmfEl.clientHeight);
             vmacdChart.resize(vmacdEl.clientWidth, vmacdEl.clientHeight);
             mfiChart.resize(mfiEl.clientWidth, mfiEl.clientHeight);
+            smoothnessChart.resize(smoothnessEl.clientWidth, smoothnessEl.clientHeight);
             renderPatternOverlay();
         });
 
@@ -3747,6 +3862,8 @@
                     vmacd_sig: vmacdSignalByTime[c.time] != null ? Math.round(vmacdSignalByTime[c.time]) : null,
                     mfi:       mfiByTime[c.time]       != null ? Math.round(mfiByTime[c.time] * 100) / 100 : null,
                     mfi_sig:   mfiSignalByTime[c.time] != null ? Math.round(mfiSignalByTime[c.time] * 100) / 100 : null,
+                    sm:        smoothnessByTime[c.time]    != null ? Math.round(smoothnessByTime[c.time] * 100) / 100 : null,
+                    sm_raw:    smoothnessRawByTime[c.time] != null ? Math.round(smoothnessRawByTime[c.time] * 100) / 100 : null,
                 };
                 return row;
             });
@@ -3770,6 +3887,7 @@
         const LAYOUT_PANE_IDS = [
             'volume-chart', 'rsi-chart', 'cmf-chart', 'atr-chart',
             'macd-chart', 'macdv-chart', 'tmf-chart', 'vmacd-chart', 'mfi-chart',
+            'smoothness-chart',
         ];
         let _layoutSaveTimer = null;
         let _suppressLayoutSave = true;  // suppress until initial restore completes

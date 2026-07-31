@@ -315,6 +315,71 @@ def compute_ema_from_values(values, period=3):
     return result
 
 
+def compute_smoothness(opens, highs, lows, closes, period=20, pct_lookback=252):
+    """Smoothness: how orderly price action is, independent of volatility.
+
+    Blends three ratios over the trailing window — efficiency ratio, mean candle
+    body fraction and directional persistence — into raw_sm (0..1), then returns
+    its percentile rank within the trailing pct_lookback raw values so it reads
+    like RSI. Returns (sm_pct, raw_sm_scaled), both left-padded with None.
+    """
+    n = len(closes)
+    raw = [None] * n
+
+    for i in range(period, n):
+        # (a) Efficiency ratio: net move / total path travelled
+        path = 0.0
+        for k in range(i - period + 1, i + 1):
+            path += abs(closes[k] - closes[k - 1])
+        if path == 0:
+            continue
+        efficiency = abs(closes[i] - closes[i - period]) / path
+
+        # (b) Mean body fraction, skipping zero-range bars
+        body_sum = 0.0
+        body_bars = 0
+        for k in range(i - period + 1, i + 1):
+            bar_range = highs[k] - lows[k]
+            if bar_range == 0:
+                continue
+            body_sum += abs(closes[k] - opens[k]) / bar_range
+            body_bars += 1
+        if body_bars == 0:
+            continue
+        body_fraction = body_sum / body_bars
+
+        # (c) Non-flip: share of consecutive deltas that keep direction
+        signs = []
+        for k in range(i - period + 1, i + 1):
+            delta = closes[k] - closes[k - 1]
+            if delta > 0:
+                signs.append(1)
+            elif delta < 0:
+                signs.append(-1)
+        if len(signs) < 2:
+            continue
+        flips = sum(1 for j in range(1, len(signs)) if signs[j] != signs[j - 1])
+        non_flip = 1 - flips / (len(signs) - 1)
+
+        raw[i] = (efficiency + body_fraction + non_flip) / 3
+
+    # Percentile rank of each raw value within its own trailing history
+    sm_pct = [None] * n
+    raw_scaled = [None] * n
+    history = []
+    for i in range(n):
+        if raw[i] is None:
+            continue
+        prior = history[-pct_lookback:] if pct_lookback > 0 else []
+        if len(prior) >= 60:
+            at_or_below = sum(1 for v in prior if v <= raw[i])
+            sm_pct[i] = round(100.0 * at_or_below / len(prior), 2)
+        raw_scaled[i] = round(raw[i] * 100, 2)
+        history.append(raw[i])
+
+    return sm_pct, raw_scaled
+
+
 def compute_ma(values, period=50):
     """Compute SMA from a list."""
     ma = [None] * len(values)
@@ -352,6 +417,8 @@ class handler(BaseHTTPRequestHandler):
         vmacd_signal = int(params.get("vmacd_signal", [9])[0])
         mfi_period = int(params.get("mfi_period", [14])[0])
         mfi_signal = int(params.get("mfi_signal", [9])[0])
+        sm_period = int(params.get("sm_period", [20])[0])
+        sm_pct_lookback = int(params.get("sm_pct_lookback", [252])[0])
 
         if period not in PERIOD_DAYS:
             period = "1y"
@@ -395,6 +462,7 @@ class handler(BaseHTTPRequestHandler):
 
         # Compute indicators on FULL dataset (including lookback)
         closes = [r["close"] for r in all_rows]
+        opens = [r["open"] for r in all_rows]
         highs = [r["high"] for r in all_rows]
         lows = [r["low"] for r in all_rows]
         volumes = [r["volume"] for r in all_rows]
@@ -414,6 +482,7 @@ class handler(BaseHTTPRequestHandler):
         vol_ma14 = compute_ma(volumes, 14)
         cmf_vals = compute_cmf(highs, lows, closes, volumes, cmf_period)
         cmf_signal = compute_ema_from_values(cmf_vals, 3)
+        sm_vals, sm_raw_vals = compute_smoothness(opens, highs, lows, closes, sm_period, sm_pct_lookback)
 
         # Build output arrays only for the requested window (trim_idx onwards)
         candles = []
@@ -438,6 +507,8 @@ class handler(BaseHTTPRequestHandler):
         ma_data = []
         cmf_data = []
         cmf_signal_data = []
+        smoothness_data = []
+        smoothness_raw_data = []
 
         for i in range(trim_idx, len(all_rows)):
             r = all_rows[i]
@@ -510,6 +581,11 @@ class handler(BaseHTTPRequestHandler):
             if cmf_signal[i] is not None:
                 cmf_signal_data.append({"time": t, "value": cmf_signal[i]})
 
+            if sm_vals[i] is not None:
+                smoothness_data.append({"time": t, "value": sm_vals[i]})
+            if sm_raw_vals[i] is not None:
+                smoothness_raw_data.append({"time": t, "value": sm_raw_vals[i]})
+
         self._send_json({
             "ticker": ticker,
             "name": meta.get("longName") or meta.get("shortName", ""),
@@ -536,6 +612,8 @@ class handler(BaseHTTPRequestHandler):
             "ma": ma_data,
             "cmf": cmf_data,
             "cmf_signal": cmf_signal_data,
+            "smoothness": smoothness_data,
+            "smoothness_raw": smoothness_raw_data,
         })
 
     def _send_json(self, data, status=200):
