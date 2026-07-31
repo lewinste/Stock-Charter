@@ -1484,7 +1484,7 @@
             <div class="pane-resize-handle" data-target="smoothness-chart" title="Drag to resize pane"></div>
             <div class="ind-legend">
                 <div class="ind-legend-row" id="smoothnessLegendRow" data-ind="smoothness">
-                    <span class="ind-name" id="smoothnessLegendName" style="color:#26a69a">Smoothness (20)</span>
+                    <span class="ind-name" id="smoothnessLegendName" style="color:#26a69a">Smoothness (40)</span>
                     <button class="ind-btn eye-btn" data-ind="smoothness" title="Toggle visibility">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                     </button>
@@ -1492,7 +1492,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 01-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
                     </button>
                     <span class="ind-val" id="smoothnessLegendVal" style="color:#26a69a"></span>
-                    <span class="ind-name" style="color:var(--text-muted);margin-left:6px">Raw</span>
+                    <span class="ind-name" style="color:var(--text-muted);margin-left:6px">Fast</span>
                     <span class="ind-val" id="smoothnessRawLegendVal" style="color:var(--text-muted)"></span>
                 </div>
             </div>
@@ -1578,7 +1578,7 @@
                 tmf:   { period: 21, signal: 9, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
                 vmacd: { fast: 12, slow: 26, signal: 9, color: '#5c6bc0', lineWidth: 1.5, lineStyle: 0 },
                 mfi:   { period: 14, signal: 9, color: '#ec407a', lineWidth: 1.5, lineStyle: 0 },
-                smoothness: { period: 20, pctLookback: 252, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
+                smoothness: { period: 40, smooth: 15, color: '#26a69a', lineWidth: 1.5, lineStyle: 0 },
             },
         };
 
@@ -2527,7 +2527,7 @@
             loadedDaysBack = PERIOD_DAYS[state.period] || 365;
             try {
                 const p = state.params;
-                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}&sm_period=${p.smoothness.period}&sm_pct_lookback=${p.smoothness.pctLookback}`);
+                const res = await fetch(`/api/chart?ticker=${state.ticker}&period=${state.period}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&cmf_period=${p.cmf.period}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}&sm_period=${p.smoothness.period}&sm_smooth=${p.smoothness.smooth}`);
                 if (!res.ok) { showToast(`API error ${res.status}: ${res.statusText}`); return; }
                 const data = await res.json();
                 if (data.error) { showToast(data.error); return; }
@@ -2552,7 +2552,7 @@
             try {
                 const p = state.params;
                 const res = await fetch(
-                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}&sm_period=${p.smoothness.period}&sm_pct_lookback=${p.smoothness.pctLookback}`
+                    `/api/chart?ticker=${state.ticker}&start=${start}&end=${now}&rsi_period=${p.rsi.period}&st_period=${p.supertrend.period}&st_mult=${p.supertrend.multiplier}&atr_period=${p.atr.period}&macd_fast=${p.macd.fast}&macd_slow=${p.macd.slow}&macd_signal=${p.macd.signal}&macdv_fast=${p.macdv.fast}&macdv_slow=${p.macdv.slow}&macdv_signal=${p.macdv.signal}&macdv_atr=${p.macdv.atr}&tmf_period=${p.tmf.period}&tmf_signal=${p.tmf.signal}&vmacd_fast=${p.vmacd.fast}&vmacd_slow=${p.vmacd.slow}&vmacd_signal=${p.vmacd.signal}&mfi_period=${p.mfi.period}&mfi_signal=${p.mfi.signal}&sm_period=${p.smoothness.period}&sm_smooth=${p.smoothness.smooth}`
                 );
                 if (!res.ok) return;
                 const data = await res.json();
@@ -2731,13 +2731,17 @@
             smoothness: {
                 title: 'Smoothness Settings',
                 help: 'How orderly the price action is — a steady institutional grind vs hectic chop. '
-                    + 'Shown as a percentile of this stock\'s own past year, so it is comparable across '
-                    + 'price levels and volatility.<br>'
-                    + '&gt;70 = unusually orderly for this stock (steady, persistent accumulation)<br>'
-                    + '&lt;30 = unusually hectic (choppy, news-driven, indecisive)',
+                    + 'Blends path curvature, candle body fraction and directional persistence, so it is '
+                    + 'independent of price level, of volatility, and of DIRECTION: an orderly decline, '
+                    + 'or an orderly arc that ends where it started, both read as smooth.<br>'
+                    + 'The 0–100 scale is absolute, calibrated once across the S&amp;P 500 — 50 means '
+                    + '"as orderly as a typical stock-day", not "median for this ticker".<br>'
+                    + '&gt;70 = unusually orderly (steady, persistent accumulation)<br>'
+                    + '&lt;30 = unusually hectic (choppy, news-driven, indecisive)<br>'
+                    + 'Smoothing damps the estimator noise; raise it for a calmer line.',
                 fields: [
-                    { key: 'period', label: 'Period', type: 'number', min: 2, max: 200 },
-                    { key: 'pctLookback', label: 'Percentile Lookback', type: 'number', min: 60, max: 2000 },
+                    { key: 'period', label: 'Period', type: 'number', min: 5, max: 200 },
+                    { key: 'smooth', label: 'Smoothing (EMA)', type: 'number', min: 1, max: 60 },
                     ...styleFields,
                 ],
             },

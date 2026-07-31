@@ -315,25 +315,107 @@ def compute_ema_from_values(values, period=3):
     return result
 
 
-def compute_smoothness(opens, highs, lows, closes, period=20, pct_lookback=252):
-    """Smoothness: how orderly price action is, independent of volatility.
+# Fixed reference distribution for Smoothness: raw texture values at each 5th
+# percentile, measured once across a broad universe of daily bars (see
+# tools/calibrate_smoothness.py). Mapping the raw value through this table makes
+# the plotted 0..100 ABSOLUTE — 50 means "as smooth as a typical stock-day",
+# not "median for this ticker". Ranking a name against its own history is
+# uniform by construction, so it fills 0..100 however smooth the stock is; that
+# was the source of the whipsaw (LDOS swept 4.8 -> 100 across an orderly arc).
+# Source: S&P 500 point-in-time universe, 608 tickers, ~1.4M pooled daily bars.
+# Keyed by window length: the raw blend keeps the same centre as the window
+# grows (median 0.419 -> 0.411) but tightens (std 0.066 -> 0.039), so a single
+# table would squash long windows toward the middle of the axis.
+SM_REFERENCE = {
+    20: [0.0892, 0.3104, 0.3336, 0.3495, 0.3622,
+         0.3732, 0.3830, 0.3923, 0.4011, 0.4096,
+         0.4181, 0.4266, 0.4352, 0.4442, 0.4536,
+         0.4638, 0.4750, 0.4882, 0.5045, 0.5287, 0.7879],
+    30: [0.1323, 0.3258, 0.3450, 0.3581, 0.3685,
+         0.3775, 0.3856, 0.3931, 0.4004, 0.4074,
+         0.4142, 0.4210, 0.4281, 0.4354, 0.4430,
+         0.4513, 0.4605, 0.4712, 0.4847, 0.5048, 0.7838],
+    40: [0.1345, 0.3353, 0.3522, 0.3636, 0.3727,
+         0.3805, 0.3876, 0.3940, 0.4002, 0.4062,
+         0.4121, 0.4181, 0.4242, 0.4305, 0.4371,
+         0.4443, 0.4523, 0.4617, 0.4735, 0.4911, 0.8135],
+    60: [0.1667, 0.3472, 0.3612, 0.3706, 0.3781,
+         0.3845, 0.3902, 0.3955, 0.4006, 0.4055,
+         0.4103, 0.4152, 0.4201, 0.4252, 0.4306,
+         0.4365, 0.4430, 0.4507, 0.4604, 0.4749, 0.7483],
+}
 
-    Blends three ratios over the trailing window — efficiency ratio, mean candle
-    body fraction and directional persistence — into raw_sm (0..1), then returns
-    its percentile rank within the trailing pct_lookback raw values so it reads
-    like RSI. Returns (sm_pct, raw_sm_scaled), both left-padded with None.
+
+def _sm_reference(period):
+    """Cut points for `period`, linearly interpolated between calibrated ones."""
+    keys = sorted(SM_REFERENCE)
+    if period <= keys[0]:
+        return SM_REFERENCE[keys[0]]
+    if period >= keys[-1]:
+        return SM_REFERENCE[keys[-1]]
+    if period in SM_REFERENCE:
+        return SM_REFERENCE[period]
+    hi = next(k for k in keys if k > period)
+    lo = keys[keys.index(hi) - 1]
+    w = (period - lo) / (hi - lo)
+    return [a + (b - a) * w for a, b in zip(SM_REFERENCE[lo], SM_REFERENCE[hi])]
+
+
+def _sm_to_scale(raw, ref):
+    """Map a raw texture value (0..1) onto the fixed 0..100 reference scale."""
+    if raw is None:
+        return None
+    step = 100.0 / (len(ref) - 1)
+    if raw <= ref[0]:
+        return 0.0
+    if raw >= ref[-1]:
+        return 100.0
+    for j in range(1, len(ref)):
+        if raw <= ref[j]:
+            lo, hi = ref[j - 1], ref[j]
+            frac = 0.0 if hi == lo else (raw - lo) / (hi - lo)
+            return round(step * (j - 1 + frac), 2)
+    return 100.0
+
+
+def compute_smoothness(opens, highs, lows, closes, period=40, smooth_span=15):
+    """Smoothness: how orderly price action is, independent of volatility AND
+    of direction.
+
+    Three dimensionless texture ratios over the trailing window:
+
+      (a) curvature   — how much the slope jerks around per unit of travel.
+                        A straight line and a gently bending arc both score
+                        high; a zigzag scores ~0. This REPLACES the old
+                        efficiency ratio (net move / path), which measured net
+                        PROGRESS: an orderly round trip that ends where it
+                        started scored as maximum chaos even though every
+                        candle was tidy.
+      (b) body fraction   — how decisively bars close within their range.
+      (c) non-flip        — share of consecutive closes that keep direction.
+
+    The blend is EMA-smoothed over smooth_span bars (the estimators are noisy:
+    non-flip is ~19 sign comparisons, so it carries several points of binomial
+    noise per bar) and then mapped onto the fixed reference scale.
+
+    Returns (sm, sm_fast), both left-padded with None and on the same 0..100
+    scale — sm is smoothed, sm_fast is the unsmoothed reading.
     """
     n = len(closes)
     raw = [None] * n
 
     for i in range(period, n):
-        # (a) Efficiency ratio: net move / total path travelled
-        path = 0.0
-        for k in range(i - period + 1, i + 1):
-            path += abs(closes[k] - closes[k - 1])
+        deltas = [closes[k] - closes[k - 1] for k in range(i - period + 1, i + 1)]
+        path = sum(abs(d) for d in deltas)
         if path == 0:
             continue
-        efficiency = abs(closes[i] - closes[i - period]) / path
+
+        # (a) Curvature: total slope change per unit travelled. A perfect zigzag
+        # reverses by 2x its step every bar, hence the 2x normaliser.
+        jerk = sum(abs(deltas[j] - deltas[j - 1]) for j in range(1, len(deltas)))
+        curvature = 1.0 - jerk / (2.0 * path)
+        if curvature < 0.0:
+            curvature = 0.0
 
         # (b) Mean body fraction, skipping zero-range bars
         body_sum = 0.0
@@ -349,35 +431,28 @@ def compute_smoothness(opens, highs, lows, closes, period=20, pct_lookback=252):
         body_fraction = body_sum / body_bars
 
         # (c) Non-flip: share of consecutive deltas that keep direction
-        signs = []
-        for k in range(i - period + 1, i + 1):
-            delta = closes[k] - closes[k - 1]
-            if delta > 0:
-                signs.append(1)
-            elif delta < 0:
-                signs.append(-1)
+        signs = [1 if d > 0 else -1 for d in deltas if d != 0]
         if len(signs) < 2:
             continue
         flips = sum(1 for j in range(1, len(signs)) if signs[j] != signs[j - 1])
         non_flip = 1 - flips / (len(signs) - 1)
 
-        raw[i] = (efficiency + body_fraction + non_flip) / 3
+        raw[i] = (curvature + body_fraction + non_flip) / 3
 
-    # Percentile rank of each raw value within its own trailing history
-    sm_pct = [None] * n
-    raw_scaled = [None] * n
-    history = []
+    # EMA-smooth the raw blend, then map both onto the fixed reference scale
+    sm = [None] * n
+    sm_fast = [None] * n
+    ref = _sm_reference(period)
+    k = 2.0 / (smooth_span + 1) if smooth_span and smooth_span > 1 else 1.0
+    ema = None
     for i in range(n):
         if raw[i] is None:
             continue
-        prior = history[-pct_lookback:] if pct_lookback > 0 else []
-        if len(prior) >= 60:
-            at_or_below = sum(1 for v in prior if v <= raw[i])
-            sm_pct[i] = round(100.0 * at_or_below / len(prior), 2)
-        raw_scaled[i] = round(raw[i] * 100, 2)
-        history.append(raw[i])
+        ema = raw[i] if ema is None else raw[i] * k + ema * (1 - k)
+        sm[i] = _sm_to_scale(ema, ref)
+        sm_fast[i] = _sm_to_scale(raw[i], ref)
 
-    return sm_pct, raw_scaled
+    return sm, sm_fast
 
 
 def compute_ma(values, period=50):
@@ -417,14 +492,17 @@ class handler(BaseHTTPRequestHandler):
         vmacd_signal = int(params.get("vmacd_signal", [9])[0])
         mfi_period = int(params.get("mfi_period", [14])[0])
         mfi_signal = int(params.get("mfi_signal", [9])[0])
-        sm_period = int(params.get("sm_period", [20])[0])
-        sm_pct_lookback = int(params.get("sm_pct_lookback", [252])[0])
+        sm_period = int(params.get("sm_period", [40])[0])
+        sm_smooth = int(params.get("sm_smooth", [15])[0])
 
         if period not in PERIOD_DAYS:
             period = "1y"
 
-        # Fetch extra lookback data for indicator warm-up
-        LOOKBACK_DAYS = int(ma_period * 1.5) + 30
+        # Fetch extra lookback data for indicator warm-up. Smoothness needs its
+        # window plus a few EMA spans to converge, which can exceed the MA's
+        # warm-up; ~1.45 calendar days per trading day.
+        sm_warmup_days = int((sm_period + 3 * sm_smooth) * 1.45)
+        LOOKBACK_DAYS = max(int(ma_period * 1.5), sm_warmup_days) + 30
         try:
             if start_ts is not None:
                 lookback_start = int(start_ts) - LOOKBACK_DAYS * 86400
@@ -482,7 +560,7 @@ class handler(BaseHTTPRequestHandler):
         vol_ma14 = compute_ma(volumes, 14)
         cmf_vals = compute_cmf(highs, lows, closes, volumes, cmf_period)
         cmf_signal = compute_ema_from_values(cmf_vals, 3)
-        sm_vals, sm_raw_vals = compute_smoothness(opens, highs, lows, closes, sm_period, sm_pct_lookback)
+        sm_vals, sm_raw_vals = compute_smoothness(opens, highs, lows, closes, sm_period, sm_smooth)
 
         # Build output arrays only for the requested window (trim_idx onwards)
         candles = []
