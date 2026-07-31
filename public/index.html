@@ -3950,9 +3950,16 @@
             }
             if (saved.params) {
                 for (const k of Object.keys(saved.params)) {
-                    if (k in state.params && typeof saved.params[k] === 'object') {
-                        Object.assign(state.params[k], saved.params[k]);
-                    }
+                    if (!(k in state.params) || typeof saved.params[k] !== 'object') continue;
+                    // Only restore blocks whose shape still matches the current
+                    // defaults. A saved block from an older build (e.g. smoothness
+                    // with pctLookback and no smooth) would otherwise silently pin
+                    // stale settings — a changed default would never reach anyone
+                    // who had used the app before, with no visible cause.
+                    const defaults = Object.keys(state.params[k]).sort().join();
+                    const restored = Object.keys(saved.params[k]).sort().join();
+                    if (defaults !== restored) continue;
+                    Object.assign(state.params[k], saved.params[k]);
                 }
             }
             if (saved.paneHeights) {
