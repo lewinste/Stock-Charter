@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מונדיאל 2026 — לוח משחקים חי</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --card-hover: #1c2330;
+    --border: #2d333b;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #2ea3ff;
+    --live: #ff4d4d;
+    --gold: #d4a017;
+    --green: #3fb950;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Segoe UI", "Heebo", Arial, sans-serif;
+    min-height: 100vh;
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: linear-gradient(180deg, #11161f 0%, rgba(13,17,23,.97) 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 16px 0;
+  }
+  .header-inner { max-width: 860px; margin: 0 auto; }
+  h1 { font-size: 22px; display: flex; align-items: center; gap: 8px; }
+  .subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
+  .updated { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  .updated .err { color: var(--live); }
+  nav { display: flex; gap: 4px; margin-top: 10px; overflow-x: auto; }
+  nav button {
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--muted);
+    font-size: 15px;
+    font-family: inherit;
+    padding: 8px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  nav button.active { color: var(--text); border-bottom-color: var(--accent); font-weight: 600; }
+  nav button .badge {
+    background: var(--live);
+    color: #fff;
+    border-radius: 10px;
+    font-size: 11px;
+    padding: 1px 7px;
+    margin-right: 5px;
+    vertical-align: middle;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 16px; }
+  .day-header {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 22px 0 10px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .day-header:first-child { margin-top: 4px; }
+  .day-header .count { color: var(--muted); font-size: 12px; font-weight: 400; }
+  .day-header.today-hdr { color: var(--accent); }
+  .match {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 6px;
+  }
+  .match.live { border-color: rgba(255,77,77,.55); box-shadow: 0 0 0 1px rgba(255,77,77,.25); }
+  .match-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: space-between;
+    color: var(--muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .stage-badge {
+    background: rgba(46,163,255,.12);
+    color: var(--accent);
+    border-radius: 6px;
+    padding: 1px 8px;
+    font-size: 12px;
+  }
+  .stage-badge.knockout { background: rgba(212,160,23,.14); color: var(--gold); }
+  .team {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 15px;
+  }
+  .team.away { flex-direction: row-reverse; text-align: left; }
+  .team .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .team.winner .name { font-weight: 700; }
+  .team img { width: 26px; height: 26px; object-fit: contain; flex-shrink: 0; }
+  .team .tbd-logo { width: 26px; height: 26px; flex-shrink: 0; text-align: center; line-height: 26px; opacity: .5; }
+  .team.tbd .name { color: var(--muted); font-size: 13px; }
+  .center { text-align: center; min-width: 86px; }
+  .score { font-size: 21px; font-weight: 700; direction: ltr; unicode-bidi: isolate; }
+  .score .pens { display: block; font-size: 11px; color: var(--muted); font-weight: 400; }
+  .kickoff { font-size: 19px; font-weight: 600; color: var(--text); direction: ltr; unicode-bidi: isolate; }
+  .status-line { font-size: 11.5px; margin-top: 2px; color: var(--muted); }
+  .status-line.live-txt { color: var(--live); font-weight: 600; }
+  .live-dot {
+    display: inline-block;
+    width: 7px; height: 7px;
+    background: var(--live);
+    border-radius: 50%;
+    margin-left: 4px;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 48px 16px;
+    font-size: 15px;
+  }
+  .loading { text-align: center; color: var(--muted); padding: 60px 0; }
+  /* standings */
+  .groups-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 14px; margin-top: 8px; }
+  .group-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  .group-card h3 { font-size: 15px; margin-bottom: 8px; color: var(--accent); }
+  .group-card table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .group-card th { color: var(--muted); font-weight: 400; font-size: 11.5px; padding: 3px 4px; text-align: center; }
+  .group-card th:first-child, .group-card td:first-child { text-align: right; }
+  .group-card td { padding: 5px 4px; text-align: center; border-top: 1px solid var(--border); }
+  .group-card td.t { display: flex; align-items: center; gap: 7px; border-top: none; }
+  .group-card tr td:first-child { border-top: 1px solid var(--border); }
+  .group-card td img { width: 18px; height: 18px; object-fit: contain; }
+  .group-card .pts { font-weight: 700; }
+  footer { text-align: center; color: var(--muted); font-size: 11.5px; padding: 20px 16px 30px; }
+  @media (max-width: 520px) {
+    .team { font-size: 13.5px; }
+    .team img, .team .tbd-logo { width: 20px; height: 20px; line-height: 20px; }
+    .score { font-size: 18px; }
+    .kickoff { font-size: 16px; }
+    .center { min-width: 70px; }
+    .groups-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <h1>⚽ מונדיאל 2026</h1>
+    <div class="subtitle">גביע העולם בכדורגל · ארה"ב, קנדה ומקסיקו · כל השעות לפי שעון ישראל 🇮🇱</div>
+    <div class="updated" id="updated">טוען...</div>
+    <nav id="tabs">
+      <button data-view="today" class="active">היום</button>
+      <button data-view="live">משחקים חיים<span class="badge" id="live-badge" style="display:none"></span></button>
+      <button data-view="all">כל המשחקים</button>
+      <button data-view="groups">טבלאות הבתים</button>
+    </nav>
+  </div>
+</header>
+<main id="main"><div class="loading">טוען את לוח המשחקים...</div></main>
+<footer>הנתונים מתעדכנים אוטומטית כל 30 שניות · מקור: ESPN</footer>
+
+<script>
+"use strict";
+
+const TZ = "Asia/Jerusalem";
+const SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard";
+const STANDINGS = "https://site.api.espn.com/apis/v2/sports/soccer/fifa.world/standings?season=2026";
+const FULL_RANGE = "20260611-20260720";
+
+/* ---- Hebrew translations ---- */
+
+const TEAM_HE = {
+  "Algeria": "אלג'יריה", "Argentina": "ארגנטינה", "Australia": "אוסטרליה",
+  "Austria": "אוסטריה", "Belgium": "בלגיה", "Bosnia-Herzegovina": "בוסניה והרצגובינה",
+  "Brazil": "ברזיל", "Canada": "קנדה", "Cape Verde": "כף ורדה",
+  "Colombia": "קולומביה", "Congo DR": "קונגו הדמוקרטית", "Croatia": "קרואטיה",
+  "Curaçao": "קוראסאו", "Czechia": "צ'כיה", "Ecuador": "אקוודור",
+  "Egypt": "מצרים", "England": "אנגליה", "France": "צרפת",
+  "Germany": "גרמניה", "Ghana": "גאנה", "Haiti": "האיטי",
+  "Iran": "איראן", "Iraq": "עיראק", "Ivory Coast": "חוף השנהב",
+  "Japan": "יפן", "Jordan": "ירדן", "Mexico": "מקסיקו",
+  "Morocco": "מרוקו", "Netherlands": "הולנד", "New Zealand": "ניו זילנד",
+  "Norway": "נורווגיה", "Panama": "פנמה", "Paraguay": "פרגוואי",
+  "Portugal": "פורטוגל", "Qatar": "קטאר", "Saudi Arabia": "ערב הסעודית",
+  "Scotland": "סקוטלנד", "Senegal": "סנגל", "South Africa": "דרום אפריקה",
+  "South Korea": "דרום קוריאה", "Spain": "ספרד", "Sweden": "שוודיה",
+  "Switzerland": "שווייץ", "Tunisia": "תוניסיה", "Türkiye": "טורקיה",
+  "United States": "ארצות הברית", "Uruguay": "אורוגוואי", "Uzbekistan": "אוזבקיסטן",
+};
+
+// Knockout-slot placeholders, e.g. "Group A Winner", "Round of 16 3 Winner"
+const PLACEHOLDER_RULES = [
+  [/^Group ([A-L]) Winner$/, (m) => `מנצחת בית ${m[1]}`],
+  [/^Group ([A-L]) 2nd Place$/, (m) => `מקום 2 בבית ${m[1]}`],
+  [/^Third Place Group (.+)$/, (m) => `מקום 3 (בתים ${m[1]})`],
+  [/^Round of 32 (\d+) Winner$/, (m) => `מנצחת משחק ${m[1]} בשלב 32 האחרונות`],
+  [/^Round of 16 (\d+) Winner$/, (m) => `מנצחת משחק ${m[1]} בשמינית הגמר`],
+  [/^Quarterfinal (\d+) Winner$/, (m) => `מנצחת רבע גמר ${m[1]}`],
+  [/^Semifinal (\d+) Winner$/, (m) => `מנצחת חצי גמר ${m[1]}`],
+  [/^Semifinal (\d+) Loser$/, (m) => `מפסידת חצי גמר ${m[1]}`],
+];
+
+const STAGE_HE = {
+  "group-stage": "שלב הבתים",
+  "round-of-32": "שלב 32 האחרונות",
+  "round-of-16": "שמינית הגמר",
+  "quarterfinals": "רבע הגמר",
+  "semifinals": "חצי הגמר",
+  "3rd-place-match": "המשחק על המקום השלישי",
+  "final": "הגמר",
+};
+
+const CITY_HE = {
+  "Mexico City": "מקסיקו סיטי", "Guadalajara": "גוודלחרה", "Guadalupe": "מונטריי",
+  "Vancouver": "ונקובר", "Toronto": "טורונטו",
+  "Santa Clara, California": "סנטה קלרה", "Arlington, Texas": "ארלינגטון (דאלאס)",
+  "Kansas City, Missouri": "קנזס סיטי", "Foxborough, Massachusetts": "פוקסבורו (בוסטון)",
+  "Miami Gardens, Florida": "מיאמי", "Philadelphia, Pennsylvania": "פילדלפיה",
+  "Seattle, Washington": "סיאטל", "Atlanta, Georgia": "אטלנטה",
+  "East Rutherford, New Jersey": "ניו יורק / ניו ג'רזי", "Houston, Texas": "יוסטון",
+  "Inglewood, California": "לוס אנג'לס",
+};
+
+function teamNameHe(team) {
+  const en = team.displayName || "";
+  if (TEAM_HE[en]) return { name: TEAM_HE[en], tbd: false };
+  for (const [re, fmt] of PLACEHOLDER_RULES) {
+    const m = en.match(re);
+    if (m) return { name: fmt(m), tbd: true };
+  }
+  return { name: en, tbd: !team.logo };
+}
+
+/* ---- date helpers (everything keyed to Israel time) ---- */
+
+const fmtDayKey = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const fmtDayLabel = new Intl.DateTimeFormat("he-IL", { timeZone: TZ, weekday: "long", day: "numeric", month: "long" });
+const fmtTime = new Intl.DateTimeFormat("he-IL", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hour12: false });
+const fmtClock = new Intl.DateTimeFormat("he-IL", { timeZone: TZ, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+
+const dayKey = (d) => fmtDayKey.format(d);
+const todayKey = () => dayKey(new Date());
+
+/* ---- state ---- */
+
+let events = new Map();        // event id -> espn event
+let teamGroup = new Map();     // team id -> group letter
+let standingsData = null;
+let view = "today";
+let lastUpdated = null;
+let fetchError = false;
+
+/* ---- data fetching ---- */
+
+async function fetchScoreboard(dates) {
+  const res = await fetch(`${SCOREBOARD}?dates=${dates}&limit=350`);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  for (const e of data.events || []) events.set(e.id, e);
+}
+
+async function fetchStandings() {
+  try {
+    const res = await fetch(STANDINGS);
+    if (!res.ok) return;
+    standingsData = await res.json();
+    for (const g of standingsData.children || []) {
+      const letter = (g.name || "").replace("Group ", "");
+      for (const ent of g.standings?.entries || []) {
+        teamGroup.set(ent.team?.id, letter);
+      }
+    }
+  } catch (e) { /* group tables are optional */ }
+}
+
+async function fullRefresh() {
+  try {
+    await fetchScoreboard(FULL_RANGE);
+    fetchError = false;
+    lastUpdated = new Date();
+  } catch (e) {
+    fetchError = true;
+  }
+  render();
+}
+
+// Lightweight refresh: only fetch a one-day UTC window around now,
+// which covers every match currently live or about to start.
+async function quickRefresh() {
+  const fmt = (d) => d.toISOString().slice(0, 10).replaceAll("-", "");
+  const now = new Date();
+  const from = new Date(now.getTime() - 36e5 * 24);
+  const to = new Date(now.getTime() + 36e5 * 24);
+  try {
+    await fetchScoreboard(`${fmt(from)}-${fmt(to)}`);
+    fetchError = false;
+    lastUpdated = new Date();
+  } catch (e) {
+    fetchError = true;
+  }
+  render();
+}
+
+/* ---- match model ---- */
+
+function matchInfo(e) {
+  const comp = e.competitions[0];
+  const status = comp.status || {};
+  const stype = status.type || {};
+  const home = comp.competitors.find((c) => c.homeAway === "home") || comp.competitors[0];
+  const away = comp.competitors.find((c) => c.homeAway === "away") || comp.competitors[1];
+  const date = new Date(e.date);
+  const slug = e.season?.slug || "";
+  const venue = comp.venue || {};
+  const city = venue.address?.city || "";
+  return {
+    id: e.id, date, slug,
+    state: stype.state || "pre",            // pre | in | post
+    detail: stype.shortDetail || "",
+    statusName: stype.name || "",
+    clock: status.displayClock || "",
+    period: status.period || 0,
+    home, away,
+    cityHe: CITY_HE[city] || city,
+  };
+}
+
+const isLive = (m) => m.state === "in";
+
+function stageLabel(m) {
+  let label = STAGE_HE[m.slug] || m.slug;
+  if (m.slug === "group-stage") {
+    const g = teamGroup.get(m.home.team?.id) || teamGroup.get(m.away.team?.id);
+    if (g) label = `בית ${g}`;
+  }
+  return label;
+}
+
+function statusLine(m) {
+  if (m.state === "in") {
+    if (m.statusName === "STATUS_HALFTIME") return "מחצית";
+    if (m.statusName === "STATUS_SHOOTOUT") return "בעיטות עונשין";
+    let txt = m.clock ? `דקה ${m.clock.replace(/'/g, "")}` : "במשחק";
+    if (m.period > 2) txt += " (הארכה)";
+    return txt;
+  }
+  if (m.state === "post") {
+    if (m.statusName === "STATUS_FINAL_PEN") return "סיום לאחר פנדלים";
+    if (m.statusName === "STATUS_FINAL_AET" || m.detail === "AET") return "סיום לאחר הארכה";
+    if (m.statusName === "STATUS_POSTPONED") return "נדחה";
+    if (m.statusName === "STATUS_CANCELED") return "בוטל";
+    return "סיום";
+  }
+  return "";
+}
+
+/* ---- rendering ---- */
+
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function teamHtml(comp, side, won) {
+  const t = teamNameHe(comp.team || {});
+  const logo = comp.team?.logo;
+  const img = (!t.tbd && logo)
+    ? `<img src="${esc(logo)}" alt="" loading="lazy" onerror="this.outerHTML='<span class=tbd-logo>⚽</span>'">`
+    : `<span class="tbd-logo">⚽</span>`;
+  return `<div class="team ${side} ${t.tbd ? "tbd" : ""} ${won ? "winner" : ""}">${img}<span class="name">${esc(t.name)}</span></div>`;
+}
+
+function matchHtml(m) {
+  const started = m.state !== "pre";
+  const homeScore = m.home.score ?? "";
+  const awayScore = m.away.score ?? "";
+  const homePens = m.home.shootoutScore;
+  const awayPens = m.away.shootoutScore;
+  const showPens = homePens != null && awayPens != null && (homePens !== 0 || awayPens !== 0) && (m.period > 4 || m.statusName.includes("PEN") || m.statusName === "STATUS_SHOOTOUT");
+
+  let center;
+  if (started) {
+    const pens = showPens ? `<span class="pens">(${homePens} - ${awayPens} בפנדלים)</span>` : "";
+    center = `<div class="score">${esc(homeScore)} - ${esc(awayScore)}${pens}</div>`;
+  } else {
+    center = `<div class="kickoff">${fmtTime.format(m.date)}</div>`;
+  }
+  const sLine = statusLine(m);
+  const live = isLive(m);
+  const statusHtml = sLine
+    ? `<div class="status-line ${live ? "live-txt" : ""}">${live ? '<span class="live-dot"></span>' : ""}${esc(sLine)}</div>`
+    : "";
+
+  return `<div class="match ${live ? "live" : ""}">
+    <div class="match-meta">
+      <span class="stage-badge ${m.slug !== "group-stage" ? "knockout" : ""}">${esc(stageLabel(m))}</span>
+      <span>🏟️ ${esc(m.cityHe)} · ${fmtTime.format(m.date)} שעון ישראל</span>
+    </div>
+    ${teamHtml(m.home, "home", m.state === "post" && m.home.winner)}
+    <div class="center">${center}${statusHtml}</div>
+    ${teamHtml(m.away, "away", m.state === "post" && m.away.winner)}
+  </div>`;
+}
+
+function renderMatchList(matches, { highlightToday = true } = {}) {
+  if (!matches.length) return "";
+  const byDay = new Map();
+  for (const m of matches) {
+    const k = dayKey(m.date);
+    if (!byDay.has(k)) byDay.set(k, []);
+    byDay.get(k).push(m);
+  }
+  const tk = todayKey();
+  let html = "";
+  for (const [k, dayMatches] of [...byDay.entries()].sort((a, b) => a[0].localeCompare(b[0]))) {
+    dayMatches.sort((a, b) => a.date - b.date);
+    const label = fmtDayLabel.format(dayMatches[0].date);
+    const isToday = highlightToday && k === tk;
+    html += `<div class="day-header ${isToday ? "today-hdr" : ""}">
+      <span>${isToday ? "📅 היום · " : ""}${esc(label)}</span>
+      <span class="count">${dayMatches.length === 1 ? "משחק אחד" : `${dayMatches.length} משחקים`}</span>
+    </div>`;
+    html += dayMatches.map(matchHtml).join("");
+  }
+  return html;
+}
+
+function renderGroups() {
+  if (!standingsData?.children?.length) {
+    return `<div class="empty">טבלאות הבתים אינן זמינות כרגע</div>`;
+  }
+  let html = `<div class="groups-grid">`;
+  for (const g of standingsData.children) {
+    const letter = (g.name || "").replace("Group ", "");
+    let rows = "";
+    for (const ent of g.standings?.entries || []) {
+      const stats = {};
+      for (const s of ent.stats || []) stats[s.name] = s.displayValue;
+      const t = teamNameHe(ent.team || {});
+      const logo = ent.team?.logos?.[0]?.href || ent.team?.logo;
+      rows += `<tr>
+        <td class="t">${logo ? `<img src="${esc(logo)}" alt="" loading="lazy">` : ""}${esc(t.name)}</td>
+        <td>${esc(stats.gamesPlayed ?? "0")}</td>
+        <td>${esc(stats.wins ?? "0")}</td>
+        <td>${esc(stats.ties ?? "0")}</td>
+        <td>${esc(stats.losses ?? "0")}</td>
+        <td dir="ltr">${esc(stats.pointsFor ?? "0")}:${esc(stats.pointsAgainst ?? "0")}</td>
+        <td class="pts">${esc(stats.points ?? "0")}</td>
+      </tr>`;
+    }
+    html += `<div class="group-card">
+      <h3>בית ${esc(letter)}</h3>
+      <table>
+        <tr><th>קבוצה</th><th>מש'</th><th>נצ'</th><th>תיקו</th><th>הפ'</th><th>שערים</th><th>נק'</th></tr>
+        ${rows}
+      </table>
+    </div>`;
+  }
+  return html + `</div>`;
+}
+
+function render() {
+  const main = document.getElementById("main");
+  const all = [...events.values()].map(matchInfo);
+  const liveMatches = all.filter(isLive);
+
+  // live tab badge
+  const badge = document.getElementById("live-badge");
+  badge.style.display = liveMatches.length ? "" : "none";
+  badge.textContent = liveMatches.length;
+
+  // updated line
+  const upd = document.getElementById("updated");
+  if (lastUpdated) {
+    upd.innerHTML = `עודכן לאחרונה: <span dir="ltr">${fmtClock.format(lastUpdated)}</span>` +
+      (fetchError ? ` · <span class="err">שגיאה בעדכון האחרון, מנסה שוב...</span>` : "");
+  } else if (fetchError) {
+    upd.innerHTML = `<span class="err">שגיאה בטעינת הנתונים, מנסה שוב...</span>`;
+  }
+
+  if (!all.length) {
+    if (!fetchError) main.innerHTML = `<div class="loading">טוען את לוח המשחקים...</div>`;
+    else main.innerHTML = `<div class="empty">לא ניתן לטעון את הנתונים. בדקו את חיבור האינטרנט.</div>`;
+    return;
+  }
+
+  let html = "";
+  if (view === "today") {
+    const tk = todayKey();
+    const todays = all.filter((m) => dayKey(m.date) === tk);
+    if (todays.length) {
+      html = renderMatchList(todays);
+    } else {
+      const upcoming = all.filter((m) => dayKey(m.date) > tk);
+      if (upcoming.length) {
+        const nextKey = [...new Set(upcoming.map((m) => dayKey(m.date)))].sort()[0];
+        html = `<div class="empty">אין משחקים היום — אלה המשחקים הקרובים:</div>` +
+          renderMatchList(upcoming.filter((m) => dayKey(m.date) === nextKey));
+      } else {
+        html = `<div class="empty">הטורניר הסתיים 🏆</div>`;
+      }
+    }
+  } else if (view === "live") {
+    html = liveMatches.length
+      ? renderMatchList(liveMatches)
+      : `<div class="empty">אין משחקים חיים כרגע</div>`;
+  } else if (view === "all") {
+    html = renderMatchList(all);
+  } else if (view === "groups") {
+    html = renderGroups();
+  }
+  main.innerHTML = html;
+}
+
+/* ---- tabs + boot ---- */
+
+document.getElementById("tabs").addEventListener("click", (ev) => {
+  const btn = ev.target.closest("button");
+  if (!btn) return;
+  view = btn.dataset.view;
+  for (const b of document.querySelectorAll("#tabs button")) b.classList.toggle("active", b === btn);
+  render();
+  window.scrollTo({ top: 0 });
+});
+
+(async function boot() {
+  await Promise.all([fullRefresh(), fetchStandings()]);
+  render();
+  setInterval(quickRefresh, 30_000);          // live scores
+  setInterval(fullRefresh, 10 * 60_000);      // full schedule + future days
+  setInterval(fetchStandings, 5 * 60_000);    // group tables
+})();
+</script>
+</body>
+</html>
